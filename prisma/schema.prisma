@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - integrates with Clerk authentication
+model User {
+  id            String         @id // This will store the Clerk user ID
+  email         String?        // Email might be handled by Clerk, making it optional here
+  firstName     String?        // Additional user information from Clerk
+  lastName      String?        // Additional user information from Clerk
+  imageUrl      String?        // Profile image URL from Clerk
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  characters    Character[]    // Characters created by this user
+  conversations Conversation[] // Conversations this user has participated in
+}
+
+// Character model - represents AI characters
+model Character {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  instructions  String         @db.Text // Instructions for the AI to follow
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  imageUrl      String?        // Optional profile image for the character
+  createdBy     User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId     String
+  conversations Conversation[] // Conversations this character is involved in
+  isPublic      Boolean        @default(false) // Whether other users can interact with this character
+}
+
+// HomeCharacter model - represents pre-generated characters for the homepage
+model HomeCharacter {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String   // Pre-generated image URL (required)
+  category    String   // e.g., "popular", "educational", etc.
+  displayOrder Int     // To control the order of display within a category
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  title       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+  messages    Message[] // Messages in this conversation
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+  role           Role         // user or assistant
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+}
+
+// Role enum - used to identify message sender
+enum Role {
+  user
+  assistant
+}

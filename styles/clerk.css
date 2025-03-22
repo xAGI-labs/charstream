@@ -1,0 +1,138 @@
+/* Custom styles for Clerk auth component */
+.clerk-auth .cl-card {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+.clerk-auth .cl-header {
+  display: none !important;
+}
+
+/* Style the social buttons */
+.clerk-auth .cl-socialButtonsBlockButton {
+  background-color: #222222 !important;
+  color: white !important;
+  border: 1px solid #333333 !important;
+  height: 44px !important;
+  border-radius: 0.375rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.clerk-auth .cl-socialButtonsBlockButton:hover {
+  background-color: #333333 !important;
+}
+
+.clerk-auth .cl-socialButtonsBlockButtonArrow {
+  display: none !important;
+}
+
+.clerk-auth .cl-socialButtonsBlockButtonText {
+  margin: 0 !important;
+  text-align: center !important;
+}
+
+/* Style the primary buttons */
+.clerk-auth .cl-formButtonPrimary {
+  background-color: #2563eb !important;
+  height: 44px !important;
+  border-radius: 0.375rem !important;
+  font-weight: 500 !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.clerk-auth .cl-formButtonPrimary:hover {
+  background-color: #1d4ed8 !important;
+}
+
+/* Style form fields */
+.clerk-auth .cl-formFieldLabel {
+  color: #d1d5db !important;
+  font-weight: normal !important;
+}
+
+.clerk-auth .cl-formFieldInput {
+  background-color: #222222 !important;
+  border-color: #333333 !important;
+  color: white !important;
+  border-radius: 0.375rem !important;
+  height: 44px !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.clerk-auth .cl-formFieldInput:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 1px #2563eb !important;
+}
+
+/* Style footer elements */
+.clerk-auth .cl-footerActionText {
+  color: #9ca3af !important;
+}
+
+.clerk-auth .cl-footerActionLink {
+  color: white !important;
+  text-decoration: underline !important;
+  font-weight: 500 !important;
+}
+
+.clerk-auth .cl-footerActionLink:hover {
+  color: #d1d5db !important;
+}
+
+/* Style divider */
+.clerk-auth .cl-dividerText {
+  color: #9ca3af !important;
+}
+
+.clerk-auth .cl-dividerLine {
+  background-color: #333333 !important;
+}
+
+/* Password visibility toggle */
+.clerk-auth .cl-formFieldInputShowPasswordButton {
+  color: #9ca3af !important;
+}
+
+.clerk-auth .cl-formFieldInputShowPasswordButton:hover {
+  color: white !important;
+}
+
+/* Footer spacing */
+.clerk-auth .cl-footerPages {
+  margin-top: 1.25rem !important;
+}
+
+/* Error messages */
+.clerk-auth .cl-alert,
+.clerk-auth .cl-formFieldError {
+  background-color: rgba(220, 38, 38, 0.1) !important;
+  color: #ef4444 !important;
+  border-color: rgba(220, 38, 38, 0.2) !important;
+}
+
+/* Hide any overflow from Clerk component */
+.clerk-auth {
+  overflow: hidden !important;
+}
+
+/* Make sure buttons look clickable */
+.clerk-auth button {
+  cursor: pointer !important;
+}
+
+/* Loading state */
+.clerk-auth .cl-loadingScreen {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.clerk-auth .cl-spinner {
+  border-color: #2563eb transparent #2563eb transparent !important;
+}
