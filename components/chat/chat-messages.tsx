@@ -168,12 +168,12 @@ export function ChatMessages({
   return (
     <div 
       ref={containerRef} 
-      className="flex flex-col space-y-1 py-3 px-4 sm:px-8 md:px-46 overflow-y-auto h-full scrollbar-thin"
+      className="flex flex-col space-y-0.5 py-3 px-4 sm:px-8 md:px-46 overflow-y-auto h-full scrollbar-thin"
     >
       {Object.entries(messagesByDate).map(([date, dateMessages], dateIndex) => (
-        <div key={date} className="flex flex-col space-y-3">
+        <div key={date} className="flex flex-col space-y-1.5 md:space-y-1">
           {/* Date indicator */}
-          <div className="flex justify-center my-4">
+          <div className="flex justify-center my-2 md:my-1.5">
             <div className="bg-muted/50 rounded-full px-3 py-1 text-xs text-muted-foreground">
               {dateIndex === 0 ? 'Today' : format(new Date(date), 'MMM d, yyyy')}
             </div>
@@ -184,13 +184,13 @@ export function ChatMessages({
             <div 
               key={message.id} 
               className={cn(
-                "flex items-start group",
+                "flex items-start group mb-0.5 md:mb-0",
                 message.role === "user" ? "justify-end" : "justify-start"
               )}
             >
               {/* Character avatar (only for assistant messages) */}
               {message.role === "assistant" && (
-                <div className="flex-shrink-0 mr-2 mt-0.5">
+                <div className="flex-shrink-0 mr-1.5 md:mr-1 mt-0.5">
                   <div className="h-8 w-8 rounded-full overflow-hidden bg-primary/10 ring-2 ring-background">
                     {characterAvatarUrl ? (
                       <Image 
@@ -220,7 +220,7 @@ export function ChatMessages({
                 {/* Message bubble */}
                 <div 
                   className={cn(
-                    "rounded-2xl px-4 py-2 text-md shadow-sm",
+                    "rounded-2xl px-3.5 py-2 text-md shadow-sm",
                     message.role === "user" 
                       ? "bg-primary text-primary-foreground rounded-tr-none" 
                       : "bg-card rounded-tl-none"
@@ -231,7 +231,7 @@ export function ChatMessages({
                 
                 {/* Message metadata */}
                 <div className={cn(
-                  "flex items-center mt-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity",
+                  "flex items-center mt-0.5 px-2 opacity-0 group-hover:opacity-100 transition-opacity",
                   message.role === "user" ? "justify-end" : "justify-start"
                 )}>
                   <span className="text-[10px] text-muted-foreground/70">
@@ -245,7 +245,7 @@ export function ChatMessages({
               
               {/* User avatar (only for user messages) */}
               {message.role === "user" && (
-                <div className="flex-shrink-0 ml-2 mt-0.5">
+                <div className="flex-shrink-0 ml-1.5 md:ml-1 mt-0.5">
                   <div className="h-8 w-8 rounded-full overflow-hidden bg-primary flex items-center justify-center ring-2 ring-background">
                     {userAvatarUrl ? (
                       <Image 
@@ -271,7 +271,7 @@ export function ChatMessages({
       {/* Only show typing indicator in text mode */}
       {isWaiting && mode === "text" && (
         <div className="flex items-start">
-          <div className="flex-shrink-0 mr-2 mt-0.5">
+          <div className="flex-shrink-0 mr-1.5 md:mr-1 mt-0.5">
             <div className="h-8 w-8 rounded-full overflow-hidden bg-muted ring-2 ring-background">
               {characterAvatarUrl ? (
                 <Image 
@@ -294,7 +294,7 @@ export function ChatMessages({
         </div>
       )}
       
-      <div ref={bottomRef} className="h-4" />
+      <div ref={bottomRef} className="h-2" />
     </div>
   )
 }
