@@ -48,8 +48,8 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
         bg-[#111111] text-white p-0 border border-[#222222] rounded-xl overflow-hidden 
         ${isMobile ? 'w-full h-full max-h-[100vh] max-w-full rounded-none border-0' : 'sm:max-w-[800px]'}
       `}>
-        <DialogTitle className="sr-only">Join Chatstream</DialogTitle>
-        <div className={`relative flex ${isMobile ? 'flex-col' : 'flex-col md:flex-row'}`}>
+        <DialogTitle className="sr-only">Join Charstream</DialogTitle>
+        <div className={`relative flex ${isMobile ? 'flex-col' : 'flex-row'}`}>
           {/* Close button */}
           <button
             onClick={() => onOpenChange(false)}
@@ -58,14 +58,14 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
             <X className="h-4 w-4" />
           </button>
 
-          {/* Phone mockup with characters - Hidden on very small screens */}
+          {/* Phone mockup with characters */}
           <div className={`
             bg-gradient-to-br from-[#1a1a1a] to-[#111111] p-6 flex items-center justify-center
-            ${isMobile ? 'py-4 hidden sm:flex' : 'md:w-1/2'}
+            ${isMobile ? 'py-4 hidden sm:flex' : 'w-1/2'}
           `}>
             <div className={`
               relative bg-black rounded-[32px] overflow-hidden border-[3px] border-[#222222] shadow-lg
-              ${isMobile ? 'w-[180px] h-[340px]' : 'w-[220px] h-[420px]'}
+              ${isMobile ? 'w-[180px] h-[340px]' : 'w-[260px] h-[480px]'}
             `}>
               <div className="absolute top-0 left-0 right-0 h-8 bg-black flex justify-center">
                 <div className="w-24 h-6 bg-black rounded-b-xl"></div>
@@ -79,7 +79,7 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
                     height={24} 
                     className="h-4 w-auto" 
                   />
-                  <span className="text-xs font-medium text-white">chatstream.ai</span>
+                  <span className="text-xs font-medium text-white">charstream.xyz</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {characterAvatars.map((character, i) => (
@@ -118,8 +118,8 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
 
           {/* Signup content */}
           <div className={`
-            flex flex-col justify-center
-            ${isMobile ? 'p-4 pt-12' : 'p-8 md:w-1/2'}
+            flex flex-col justify-center items-center
+            ${isMobile ? 'p-4 pt-12' : 'p-8 w-1/2'}
           `}>
             {/* Mobile app logo - only shown on very small screens */}
             {isMobile && (
@@ -144,15 +144,15 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
             </div>
 
             {/* Clerk Auth Component */}
-            <div className="w-full clerk-auth">
+            <div className="w-full max-w-[400px] flex flex-col items-center">
               <SignIn 
                 routing="hash"
                 afterSignInUrl="/"
                 afterSignUpUrl="/"
                 appearance={{
                   elements: {
-                    rootBox: "w-full",
-                    card: "bg-transparent shadow-none",
+                    rootBox: "w-full flex flex-col items-center",
+                    card: "bg-transparent shadow-none w-full",
                     header: "hidden",
                     footer: {
                       backgroundColor: "transparent",
@@ -160,18 +160,18 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
                       fontSize: isMobile ? "0.75rem" : "0.875rem",
                       textAlign: "center"
                     },
-                    socialButtons: isMobile ? "grid grid-cols-2 gap-2" : "gap-2",
+                    socialButtons: isMobile ? "grid grid-cols-2 gap-2" : "flex gap-4 justify-center",
                     socialButtonsProviderIcon: isMobile ? "w-4 h-4" : "w-5 h-5",
                     socialButtonsBlockButton: `
                       bg-[#222222] hover:bg-[#333333] border border-[#333333] text-white rounded-md
-                      ${isMobile ? 'h-10 text-xs' : 'h-11'}
+                      ${isMobile ? 'h-10 text-xs' : 'h-12 text-sm'}
                     `,
                     socialButtonsBlockButtonText: `font-medium ${isMobile ? 'text-xs' : 'text-sm'}`,
                     dividerLine: "bg-[#333333]",
                     dividerText: "text-gray-400",
-                    formButtonPrimary: "bg-blue-600 hover:bg-blue-700 rounded-md font-medium",
+                    formButtonPrimary: "bg-blue-600 hover:bg-blue-700 rounded-md font-medium w-full",
                     formFieldLabel: "text-gray-300",
-                    formFieldInput: "bg-[#222222] border-[#333333] text-white rounded-md",
+                    formFieldInput: "bg-[#222222] border-[#333333] text-white rounded-md w-full",
                     formFieldInputShowPasswordButton: "text-gray-400",
                     formFieldAction: "text-blue-400",
                     footerActionText: "text-gray-400",
