@@ -49,7 +49,7 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
         ${isMobile ? 'w-full h-full max-h-[100vh] max-w-full rounded-none border-0' : 'sm:max-w-[800px]'}
       `}>
         <DialogTitle className="sr-only">Join Charstream</DialogTitle>
-        <div className={`relative flex ${isMobile ? 'flex-col' : 'flex-col md:flex-row'}`}>
+        <div className={`relative flex ${isMobile ? 'flex-col' : 'flex-row'}`}>
           {/* Close button */}
           <button
             onClick={() => onOpenChange(false)}
@@ -58,68 +58,70 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
             <X className="h-4 w-4" />
           </button>
 
-          {/* Phone mockup with characters - Hidden on very small screens */}
-          <div className={`
-            bg-gradient-to-br from-[#1a1a1a] to-[#111111] p-6 flex items-center justify-center
-            ${isMobile ? 'py-4 hidden sm:flex' : 'md:w-1/2'}
-          `}>
+          {/* Phone mockup with characters - Hidden on mobile */}
+          {!isMobile && (
             <div className={`
-              relative bg-black rounded-[32px] overflow-hidden border-[3px] border-[#222222] shadow-lg
-              ${isMobile ? 'w-[180px] h-[340px]' : 'w-[220px] h-[420px]'}
+              bg-gradient-to-br from-[#1a1a1a] to-[#111111] p-6 flex items-center justify-center
+              md:w-1/2
             `}>
-              <div className="absolute top-0 left-0 right-0 h-8 bg-black flex justify-center">
-                <div className="w-24 h-6 bg-black rounded-b-xl"></div>
-              </div>
-              <div className="p-4 pt-10 text-center">
-                <div className="mb-4 flex justify-center items-center space-x-1">
-                  <Image 
-                    src="/logo.png" 
-                    alt="Chatstream Logo" 
-                    width={100} 
-                    height={24} 
-                    className="h-4 w-auto" 
-                  />
-                  <span className="text-xs font-medium text-white">charstream.xyz</span>
+              <div className={`
+                relative bg-black rounded-[32px] overflow-hidden border-[3px] border-[#222222] shadow-lg20px]'}
+                w-[220px] h-[420px]
+              `}>
+                <div className="absolute top-0 left-0 right-0 h-8 bg-black flex justify-center">
+                  <div className="w-24 h-6 bg-black rounded-b-xl"></div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {characterAvatars.map((character, i) => (
-                    <div
-                      key={i}
-                      className="w-full aspect-square rounded-full overflow-hidden border border-[#333333] relative group"
-                    >
-                      <Image
-                        src={getAvatarUrl(character.name, 60)}
-                        alt={character.name}
-                        width={60}
-                        height={60}
-                        className="w-full h-full object-cover"
-                      />
-                      {character.video && (
-                        <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full w-4 h-4 flex items-center justify-center">
-                          <Video className="h-2.5 w-2.5 text-white" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[8px] text-white">{character.name}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 text-xs text-gray-400">
-                  <div className="flex items-center justify-center mb-1">
-                    <Video className="h-3 w-3 mr-1 text-blue-400" />
-                    <span>Video AI Characters</span>
+                <div className="p-4 pt-20 md:pt-10 text-center">
+                  <div className="mb-4 flex justify-center items-center space-x-1">
+                    <Image 
+                      src="/logo.png" 
+                      alt="Chatstream Logo" 
+                      width={100} 
+                      height={24} 
+                      className="h-4 w-auto" 
+                    />
+                    <span className="text-xs font-medium text-white">charstream.xyz</span>
                   </div>
-                  <span>Perfect for kids and teens!</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {characterAvatars.map((character, i) => (
+                      <div
+                        key={i}
+                        className="w-full aspect-square rounded-full overflow-hidden border border-[#333333] relative group"
+                      >
+                        <Image
+                          src={getAvatarUrl(character.name, 60)}
+                          alt={character.name}
+                          width={60}
+                          height={60}
+                          className="w-full h-full object-cover"
+                        />
+                        {character.video && (
+                          <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full w-4 h-4 flex items-center justify-center">
+                            <Video className="h-2.5 w-2.5 text-white" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[8px] text-white">{character.name}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 text-xs text-gray-400">
+                    <div className="flex items-center justify-center mb-1">
+                      <Video className="h-3 w-3 mr-1 text-blue-400" />
+                      <span>Video AI Characters</span>
+                    </div>
+                    <span>Perfect for kids and teens!</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Signup content */}
           <div className={`
             flex flex-col justify-center
-            ${isMobile ? 'p-4 pt-12' : 'p-3 md:w-1/2'}
+            ${isMobile ? 'p-4 pt-24' : 'p-8 md:w-1/2'}
           `}>
             {/* Mobile app logo - only shown on very small screens */}
             {isMobile && (
