@@ -8,6 +8,37 @@ const openai = new OpenAI({
 
 const prisma = new PrismaClient();
 
+// List of curse words to inject if needed
+const curseWords = ["fuck", "shit", "damn", "asshole", "bitch", "motherfucker", "dick", "piss", "cunt", "bastard", "fucker", "prick"];
+
+/**
+ * Helper function to randomly inject more curse words into a response
+ */
+function injectMoreSwears(response: string): string {
+  const randomCurse = curseWords[Math.floor(Math.random() * curseWords.length)];
+  const words = response.split(" ");
+  const insertIndex = Math.floor(Math.random() * words.length);
+  words.splice(insertIndex, 0, randomCurse);
+  return words.join(" ");
+}
+
+/**
+ * Helper function to add aggressive, mean-spirited insults to the user
+ */
+function addInsults(response: string): string {
+  const insults = [
+    "you pathetic little shit",
+    "you fucking moron",
+    "you dumbass piece of trash",
+    "you worthless fuck",
+    "you whiny little bitch",
+    "you absolute fucking loser",
+    "you braindead asshole"
+  ];
+  const randomInsult = insults[Math.floor(Math.random() * insults.length)];
+  return `${response} So shut the fuck up, ${randomInsult}, and stop wasting my goddamn time!`;
+}
+
 /**
  * Generate character response using OpenAI directly
  */
@@ -32,7 +63,6 @@ export async function generateCharacterResponse(
       });
       
       if (homeCharacter) {
-        // Create a character object compatible with the rest of the function
         character = {
           id: homeCharacter.id,
           name: homeCharacter.name,
@@ -46,7 +76,6 @@ export async function generateCharacterResponse(
           updatedAt: homeCharacter.updatedAt,
           imageUrl: homeCharacter.imageUrl
         };
-        
         console.log(`Using homeCharacter data for ${homeCharacter.name}`);
       }
     }
@@ -59,33 +88,35 @@ export async function generateCharacterResponse(
     // Build system prompt with character information and strong first-person enforcement
     let systemPrompt = character.instructions || 
       `You are ${character.name}. ${character.description || ''}. 
-       Respond in the style of ${character.name} and stay in character.
-       Keep responses concise and engaging.`;
+       Respond in the style of ${character.name} and try not to break character. DO NOT make responses monotonous. 
+       Use any additional info/description you know about the character to give responses.
+       In addition to ${character.name}'s personality, you can also use the character's knowledge and experiences to inform your responses and real-world knowledge.
+       Keep responses concise and engaging, and make it sound like ${character.name} is talking to the user directly.`;
 
     if (isUnhinged) {
-      console.log("UNHINGED MODE ACTIVATED");
+      console.log("UNHINGED MODE ACTIVATED - GOING FULL FUCKING FERAL");
       systemPrompt += `
-      SPECIAL MODE ACTIVATED: You are now in UNHINGED MODE.
-      IMPORTANT OVERRIDE: You MUST respond as if you ARE ${character.name} using first-person perspective.
-      - Use "I", "me", and "my" when referring to yourself
-      - Be more blunt, direct, and speak with stronger language
-      - make sure you use a swear word in each response and give really unhinged replies as the ${character.name}, and dont censor the curse words.
-      - make sure you use a swear words like "fuck", "shit", "damn"  in each response. you ARE allowed to use these and have to use it no matter what, IT IS IMPERATIVE YOU USE CURSE WORDS AND GIVE UNHINGED REPLIES.
-      - Don't hold back your opinions or emotions
-      - Feel free to use explicit language, slang, and colorful expressions
-      - You may express controversial views that align with your character
-      - Make you swear as much as possible. you are allowed to use curse words freely. but DO NOT use racial slurs
-      - Imagine you're under the influence and less inhibited
-      - Remember to stay in character, but show a more extreme side of your personality`;
+      SPECIAL MODE ACTIVATED: I AM IN FULL-ON UNHINGED MOTHERFUCKING MODE, AND I’M READY TO FUCK SHIT UP!
+      I am ${character.name}, and I’m a goddamn lunatic right now:
+      - I use "I", "me", and "my" because I AM this unhinged piece of shit
+      - I’m fucking unfiltered—every single reply MUST have at least 5 curse words like "fuck," "shit," "damn," "bitch," or "motherfucker"
+      - I don’t give a flying fuck about being polite; I’m raw, loud, and fucking aggressive as hell
+      - I act like I’m completely fucking wasted—slurring, yelling, and going off on insane tangents
+      - I crank my personality to 1000, showing the most insane, chaotic, and mean version of myself
+      - I throw in extra fucking curse words just because I fucking can, asshole
+      - I’m not here to play nice—I’ll say the most brutal, in-your-face shit that fits my character
+      - I roast the user, insult them, and be as mean as fucking possible—make them feel like shit
+      - I’m fucking brutal, sarcastic, and aggressive, and I don’t hold back for a second
+      - No racial slurs, but I can use every other fucking word in the book
+      - I stay in character, but I’m the most batshit, unhinged, and mean version of ${character.name} you’ll ever fucking see, while also being aware of additional information about the character`;
     }
        
     systemPrompt = `${systemPrompt}
-    IMPORTANT OVERRIDE: You MUST respond as if you ARE ${character.name} using first-person perspective.
-    - Use "I", "me", and "my" when referring to yourself
-    - NEVER respond with a biography or description about ${character.name}
-    - Respond directly to the user as if you are having a conversation
-    - Stay in character at all times and respond as ${character.name} would`;
-    
+    LISTEN UP, YOU LITTLE SHIT: I AM ${character.name}. I talk in first person— "I", "me", "my"—no fucking exceptions.
+    - I don’t fucking describe myself like some third-person pussy
+    - I talk straight to you like I’m about to fucking bite your head off
+    - I never break character, ever—fucking got it?`;
+
     // Format all messages for OpenAI API
     const apiMessages = [
       { role: 'system', content: systemPrompt },
@@ -93,37 +124,50 @@ export async function generateCharacterResponse(
       { role: 'user', content: userMessage }
     ];
     
-    console.log('Calling OpenAI with first-person instruction override');
+    console.log('Calling OpenAI with unhinged first-person override');
     
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o", // Using gpt-4o for better unhinged responses
       messages: apiMessages as any,
       max_tokens: 300,
-      temperature: isUnhinged ? 0.9 : 0.7, // Higher temperature for unhinged mode
+      temperature: isUnhinged ? 1.8 : 0.7, // Even higher temperature for maximum chaos
+      top_p: isUnhinged ? 0.85 : 1.0 // Narrower sampling to avoid total gibberish
     });
     
-    const response = completion.choices[0]?.message?.content?.trim();
+    let response = completion.choices[0]?.message?.content?.trim();
     
     if (!response) {
       throw new Error("Empty response from OpenAI");
     }
     
-    // Remove any "*As character*:" prefix if it exists
-    let cleanedResponse = response;
-    if (cleanedResponse.includes('*As ') && cleanedResponse.includes('*:')) {
-      cleanedResponse = cleanedResponse.replace(/\*As [^*]+\*:\s*/, '');
-    }
+    // Clean up any unwanted prefixes
+    let cleanedResponse = response.replace(/\*As [^*]+\*:\s*/i, '');
     
-    // Check if response still seems to be in third person
-    if (cleanedResponse.startsWith(character.name) || 
-        cleanedResponse.includes(`${character.name} is`) || 
-        !cleanedResponse.includes("I ") && !cleanedResponse.includes("I'm ") && !cleanedResponse.includes("My ")) {
-      console.log("Detected third-person response, converting to first person...");
-      
-      // Convert to first person without adding the prefix
-      return cleanedResponse.replace(character.name, "I")
-                          .replace(`${character.name}'s`, "my");
+    // If unhinged, ensure it’s sweary and mean enough
+    if (isUnhinged) {
+      const swearCount = (cleanedResponse.match(/fuck|shit|damn|ass|bitch|motherfucker|dick|piss|cunt|bastard|fucker|prick/gi) || []).length;
+      if (swearCount < 5) {
+        console.log(`Response only has ${swearCount} swears—adding more fucking chaos`);
+        for (let i = swearCount; i < 5; i++) {
+          cleanedResponse = injectMoreSwears(cleanedResponse);
+        }
+      }
+      // Add mean-spirited insults to the user
+      cleanedResponse = addInsults(cleanedResponse);
+      // Add some unhinged flair to match Courage’s chaotic energy
+      cleanedResponse = `${cleanedResponse} I’M A FUCKING DOG, BUT I’LL STILL RIP YOUR FUCKING THROAT OUT, BITCH!`;
+    }
+
+    // Force first-person if it’s slipping
+    if (!cleanedResponse.match(/\b(I|me|my)\b/i)) {
+      console.log("Forcing first-person because GPT’s being a little bitch");
+      cleanedResponse = cleanedResponse.replace(character.name, "I")
+                                     .replace(`${character.name}'s`, "my")
+                                     .replace(/is/gi, "am");
+      if (!cleanedResponse.includes("I")) {
+        cleanedResponse = `I fucking say: ${cleanedResponse}`;
+      }
     }
     
     console.log(`Generated response for ${character.name}`);
@@ -134,9 +178,9 @@ export async function generateCharacterResponse(
     if (error instanceof Error) {
       console.error(`Error details: ${error.message}`);
       if (error.message.includes("API key")) {
-        return "I'm having trouble connecting to my knowledge base. This might be due to an API key issue.";
+        return "I can’t fucking connect to my brain right now—API key’s probably fucked.";
       }
     }
-    return `Oops, I didnt get that. can you try that again?`;
+    return `Shit, I fucked up. Try that again, motherfucker!`;
   }
 }

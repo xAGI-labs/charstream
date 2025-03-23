@@ -1,17 +1,11 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { Beer, Cannabis, AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Toggle } from '@/components/ui/toggle'
 import { cn } from '@/lib/utils'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu'
 
 // Time durations in milliseconds
 const BEER_DURATION = 30 * 60 * 1000 // 30 minutes
@@ -30,6 +24,7 @@ export function UnhingedModeToggle({
 }: UnhingedModeToggleProps) {
   const [remainingTime, setRemainingTime] = useState<number | null>(null)
   const [showWarning, setShowWarning] = useState(false)
+  const [currentAddon, setCurrentAddon] = useState<'beer' | 'joint' | null>(null)
 
   // Format the remaining time as mm:ss
   const formatTime = (ms: number) => {
@@ -50,6 +45,7 @@ export function UnhingedModeToggle({
           clearInterval(interval)
           console.log("Unhinged mode timer expired, resetting to normal mode")
           onUnhingedChange(false)
+          setCurrentAddon(null)
           toast(`${characterName} has sobered up!`)
           return null
         }
@@ -72,6 +68,7 @@ export function UnhingedModeToggle({
   const handleAddonSelect = (type: 'beer' | 'joint') => {
     const duration = type === 'beer' ? BEER_DURATION : JOINT_DURATION
     setRemainingTime(duration)
+    setCurrentAddon(type)
     onUnhingedChange(true)
     setShowWarning(false)
     
@@ -88,6 +85,7 @@ export function UnhingedModeToggle({
       // When toggling off, deactivate immediately
       onUnhingedChange(false)
       setRemainingTime(null)
+      setCurrentAddon(null)
     }
   }
 
@@ -96,7 +94,7 @@ export function UnhingedModeToggle({
   }
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center relative">
       {showWarning && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center mt-16">
           <div className="bg-card p-6 rounded-lg shadow-lg max-w-md w-full mt-40">
@@ -117,11 +115,11 @@ export function UnhingedModeToggle({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center">
                   <DropdownMenuItem onClick={() => handleAddonSelect('beer')}>
-                    <Beer className="mr-2 h-4 w-4" />
+                    <img src="/beer.svg" alt="Beer" className="mr-2 h-6 w-6" />
                     <span>Give a Beer (30 min)</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleAddonSelect('joint')}>
-                    <Cannabis className="mr-2 h-4 w-4" />
+                    <img src="/joint.svg" alt="Joint" className="mr-2 h-6 w-6" />
                     <span>Give a Joint (1 hour)</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -135,23 +133,48 @@ export function UnhingedModeToggle({
         </div>
       )}
 
+      {currentAddon && (
+        <div className="mr-3">
+          {currentAddon === 'beer' ? (
+            <img src="/beer.svg" alt="Beer" className="h-8 w-8 animate-bounce" />
+          ) : (
+            <img src="/joint.svg" alt="Joint" className="h-8 w-8 animate-bounce" />
+          )}
+        </div>
+      )}
+
       {remainingTime && isUnhinged && (
         <span className="text-xs text-muted-foreground mr-2">
           {formatTime(remainingTime)}
         </span>
       )}
 
-      <Toggle
-        pressed={isUnhinged}
-        onPressedChange={handleToggleClick}
+      <div
         className={cn(
-          "relative",
-          isUnhinged ? "bg-amber-500 text-amber-50 hover:bg-amber-500/90" : ""
+          "relative w-16 h-8 flex items-center rounded-full cursor-pointer transition-colors",
+          isUnhinged ? "bg-amber-500" : "bg-muted animate-pulse"
         )}
+        onClick={handleToggleClick}
         aria-label="Toggle unhinged mode"
+        title="Unleash the wild side of your character!"
       >
+        <div
+          className={cn(
+            "absolute w-6 h-6 bg-white rounded-full shadow-md transition-transform",
+            isUnhinged ? "translate-x-8" : "translate-x-0"
+          )}
+        />
+      </div>
+
+      <span className="ml-3 text-sm font-medium">
         {isUnhinged ? "Unhinged" : "Normal"}
-      </Toggle>
+      </span>
+
+      {!isUnhinged && (
+        <div className="absolute top-16 left-0 bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-md shadow-md animate-bounce hidden sm:block">
+          Try Unhinged Mode!
+        </div>
+      )}
 
       {isUnhinged && (
         <Button 
@@ -161,6 +184,7 @@ export function UnhingedModeToggle({
           onClick={() => {
             onUnhingedChange(false)
             setRemainingTime(null)
+            setCurrentAddon(null)
             toast(`${characterName} has sobered up!`)
           }}
         >

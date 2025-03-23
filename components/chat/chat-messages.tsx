@@ -168,7 +168,7 @@ export function ChatMessages({
   return (
     <div 
       ref={containerRef} 
-      className="flex flex-col space-y-0.5 py-3 px-4 sm:px-8 md:px-54 overflow-y-auto h-full scrollbar-thin"
+      className="flex flex-col space-y-0.5 py-3 px-4 md:px-54 overflow-y-auto h-full scrollbar-thin"
     >
       {Object.entries(messagesByDate).map(([date, dateMessages], dateIndex) => (
         <div key={date} className="flex flex-col space-y-1.5 md:space-y-1">

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 504 504" xml:space="preserve">
+<circle style="fill:#FFD05B;" cx="252" cy="252" r="252"/>
+<rect x="225.2" y="63.6" style="fill:#2B3B4E;" width="8.8" height="30.8"/>
+<rect x="234.4" y="63.6" style="fill:#324A5E;" width="8.8" height="30.8"/>
+<rect x="243.2" y="63.6" style="fill:#2B3B4E;" width="8.8" height="30.8"/>
+<rect x="252" y="63.6" style="fill:#324A5E;" width="8.8" height="30.8"/>
+<rect x="260.8" y="63.6" style="fill:#2B3B4E;" width="8.8" height="30.8"/>
+<rect x="269.6" y="63.6" style="fill:#324A5E;" width="8.8" height="30.8"/>
+<g>
+	<path style="fill:#FF7058;" d="M194.4,432.4c0,4.4,3.6,8,8,8H302c4.4,0,8-3.6,8-8v-38H194.4V432.4z"/>
+	<path style="fill:#FF7058;" d="M309.6,268.4c0-12-3.6-44-10-53.2C283.6,191.6,274,126,274,97.6v-3.2h-44.4v3.2
+		c0,28.4-9.6,94-25.6,117.6c-6.4,9.2-10,41.2-10,53.2v0.4L309.6,268.4L309.6,268.4z"/>
+	<rect x="194.4" y="268.4" style="fill:#FF7058;" width="115.6" height="125.6"/>
+</g>
+<rect x="200" y="268.4" style="fill:#FFFFFF;" width="104.4" height="125.6"/>
+<ellipse style="fill:#2B3B4E;" cx="252" cy="331.2" rx="38.4" ry="58.8"/>
+</svg>
