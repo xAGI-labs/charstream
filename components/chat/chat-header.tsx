@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { UnhingedModeToggle } from "./unhinged-mode-toggle"
+import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogTrigger, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 interface ChatHeaderProps {
   character?: {
@@ -25,6 +26,7 @@ interface ChatHeaderProps {
   loading?: boolean; // Keep this as boolean | undefined only
   isUnhinged?: boolean;
   onUnhingedChange?: (value: boolean) => void;
+  onDeleteChat: () => Promise<void>; // Add this prop
 }
 
 export function ChatHeader({ 
@@ -32,9 +34,11 @@ export function ChatHeader({
   title, 
   loading = false,
   isUnhinged = false,
-  onUnhingedChange
+  onUnhingedChange,
+  onDeleteChat // Destructure the new prop
 }: ChatHeaderProps) {
   const [imgError, setImgError] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false); // Add state to manage AlertDialog
   const router = useRouter();
   
   // Add debug logging to see what's coming in
@@ -89,18 +93,26 @@ export function ChatHeader({
           <div className="flex items-center space-x-3">
             <div className="relative h-9 w-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-background shadow-sm">
               {avatarUrl ? (
-                <Image 
-                  src={avatarUrl} 
-                  alt={displayName} 
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    console.error(`Header image error for ${displayName}:`, e);
-                    setImgError(true);
-                  }}
-                  unoptimized // Add this to avoid Next.js image optimization issues with Cloudinary
-                  priority
-                />
+                <>
+                  <Image 
+                    src={avatarUrl} 
+                    alt={displayName} 
+                    fill
+                    className="object-cover"
+                    onError={(e) => {
+                      console.error(`Header image error for "${displayName}". URL: ${avatarUrl}`, e);
+                      setImgError(true); // Trigger fallback UI
+                    }}
+                    onLoad={() => console.log(`Header image loaded successfully for "${displayName}". URL: ${avatarUrl}`)} // Log successful load
+                    unoptimized // Add this to avoid Next.js image optimization issues with Cloudinary
+                    priority
+                  />
+                  {imgError && (
+                    <div className="bg-primary/20 h-full w-full flex items-center justify-center">
+                      <span className="font-semibold text-primary">{displayName[0] || '?'}</span>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="bg-primary/20 h-full w-full flex items-center justify-center">
                   <span className="font-semibold text-primary">{displayName[0] || '?'}</span>
@@ -135,9 +147,44 @@ export function ChatHeader({
           />
         )}
         
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Settings className="h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              className="text-red-500 hover:text-red-700"
+              onClick={() => setIsAlertOpen(true)} // Open the AlertDialog
+            >
+              Delete Chat
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Chat</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this chat? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setIsAlertOpen(false)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={async () => {
+                  await onDeleteChat();
+                  setIsAlertOpen(false); // Close the AlertDialog after deletion
+                }}
+                className="bg-red-500 text-white hover:bg-red-600"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </header>
   )

@@ -122,6 +122,25 @@ export default function ChatPage() {
     }
   }
 
+  const deleteChat = async () => {
+    if (!chatId) return;
+    try {
+      const response = await fetch(`/api/conversations/${chatId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete chat");
+      }
+
+      toast.success("Chat deleted successfully");
+      window.location.href = "/"; // Redirect to home after deletion
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+      toast.error("Failed to delete chat");
+    }
+  };
+
   // Authentication check
   if (!userId) {
     return (
@@ -184,6 +203,7 @@ export default function ChatPage() {
           loading={!!loading} // Ensure it's boolean
           isUnhinged={isUnhinged}
           onUnhingedChange={setIsUnhinged}
+          onDeleteChat={deleteChat} // Pass deleteChat function
         />
         
         {/* Mode Switcher - with updated handler */}

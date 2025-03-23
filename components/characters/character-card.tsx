@@ -78,21 +78,28 @@ export function CharacterCard({ character, onClick, disabled }: CharacterCardPro
         {!imageUrl || imgError ? (
           <EmptyImagePlaceholder />
         ) : (
-          <Image
-            src={imageUrl}
-            alt={character.name}
-            fill
-            className="object-cover"
-            onError={(e) => {
-              console.error(`CharacterCard: Image error for ${character.name}, URL:`, imageUrl);
-              setImgError(true);
-            }}
-            unoptimized={true} // Needed for external URLs like Cloudinary
-          />
+          <>
+            <Image
+              src={imageUrl}
+              alt={character.name}
+              fill
+              className="object-cover"
+              onError={(e) => {
+                console.error(`CharacterCard: Failed to load image for character "${character.name}". URL: ${imageUrl}`, e);
+                setImgError(true); // Trigger fallback UI
+                setIsLoading(false); // Ensure loading state is updated
+              }}
+              onLoad={() => setIsLoading(false)} // Update loading state when image loads successfully
+              unoptimized={true} // Needed for external URLs like Cloudinary
+            />
+            {imgError && <EmptyImagePlaceholder />} // Show fallback UI if image fails
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-200/50">
+                <span className="text-sm text-muted-foreground">Loading...</span>
+              </div>
+            )}
+          </>
         )}
-        
-        {/* Show placeholder if image loading failed */}
-        {imgError && <EmptyImagePlaceholder />}
       </div>
       <h3 className="font-medium text-sm">{character.name}</h3>
       {character.description && (
