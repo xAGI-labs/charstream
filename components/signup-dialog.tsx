@@ -163,10 +163,10 @@ export default function SignupDialog({ open, onOpenChange }: SignupDialogProps) 
                     socialButtons: isMobile ? "grid grid-cols-2 gap-2" : "flex gap-4 justify-center",
                     socialButtonsProviderIcon: isMobile ? "w-4 h-4" : "w-5 h-5",
                     socialButtonsBlockButton: `
-                      bg-[#222222] hover:bg-[#333333] border border-[#333333] text-white rounded-md
+                      bg-white hover:bg-gray-100 border border-gray-300 text-white rounded-md
                       ${isMobile ? 'h-10 text-xs' : 'h-12 text-sm'}
                     `,
-                    socialButtonsBlockButtonText: `font-medium ${isMobile ? 'text-xs' : 'text-sm'}`,
+                    socialButtonsBlockButtonText: `font-medium ${isMobile ? 'text-xs' : 'text-sm text-white'}`,
                     dividerLine: "bg-[#333333]",
                     dividerText: "text-gray-400",
                     formButtonPrimary: "bg-blue-600 hover:bg-blue-700 rounded-md font-medium w-full",
