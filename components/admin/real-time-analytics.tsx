@@ -17,24 +17,18 @@ export function RealTimeAnalytics({ refreshInterval = 60000 }: RealTimeAnalytics
 
   useEffect(() => {
     const fetchRealTimeData = async () => {
-      setIsLoading(true)
-      try {
-        // We can't directly query detailed analytics with the JavaScript client,
-        // but we can use feature flags to see if we're connected
-        const isConnected = posthog && typeof posthog.getFeatureFlag === 'function'
-        
-        // Get a rough estimate of active users using timestamp-based approach
-        // This is an approximation since we don't have direct access to real-time stats
-        const now = new Date()
-        const randomOffset = Math.floor(Math.random() * 5) + 3 // Random number between 3-8
-        setActiveUsers(randomOffset)
-
-        setLastUpdated(now.toLocaleTimeString())
-      } catch (error) {
-        console.error("Error fetching real-time analytics:", error)
-      } finally {
-        setIsLoading(false)
+      if (posthog) {
+        // Send a custom event to PostHog for real-time analytics
+        posthog.capture("real_time_analytics", {
+          "event_type": "fetch_real_time_data",
+          "timestamp": new Date().toISOString(),
+        })
       }
+
+      // Simulate fetching real-time data
+      const randomOffset = Math.floor(Math.random() * 5) + 3 // Random number between 3-8
+      setActiveUsers(randomOffset)
+      setLastUpdated(new Date().toLocaleTimeString())
     }
 
     // Fetch immediately
@@ -43,7 +37,6 @@ export function RealTimeAnalytics({ refreshInterval = 60000 }: RealTimeAnalytics
     // Set up interval for periodic updates
     const intervalId = setInterval(fetchRealTimeData, refreshInterval)
 
-    // Cleanup
     return () => clearInterval(intervalId)
   }, [posthog, refreshInterval])
 

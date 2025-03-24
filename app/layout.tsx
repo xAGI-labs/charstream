@@ -8,6 +8,7 @@ import "../styles/clerk.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import ThemeContextProvider from "@/context/theme-context";
 import ThemeSwitch from "@/components/theme-switch";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 
 export const metadata: Metadata = {
   title: "charstream.xyz | Personalized AI Characters for every moment of your day",
@@ -30,31 +31,32 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <ClerkProvider>
-          <ThemeContextProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem={false}
-              storageKey="chatstream-theme"
-            >
-              {children}
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  style: {
-                    background: "#030303",
-                    color: "#fff",
-                    border: "1px solid #444",
-                  },
-                }}
-              />
-              <ThemeSwitch />
-            </ThemeProvider>
-          </ThemeContextProvider>
-        </ClerkProvider>
+        <PostHogProvider>
+          <ClerkProvider>
+            <ThemeContextProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                enableSystem={false}
+                storageKey="chatstream-theme"
+              >
+                {children}
+                <Toaster
+                  position="top-center"
+                  toastOptions={{
+                    style: {
+                      background: "#030303",
+                      color: "#fff",
+                      border: "1px solid #444",
+                    },
+                  }}
+                />
+                <ThemeSwitch />
+              </ThemeProvider>
+            </ThemeContextProvider>
+          </ClerkProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
 }
-

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePostHog } from "posthog-js/react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { AdminAuthProvider, useAdminAuth } from "@/lib/admin-auth"
@@ -56,6 +57,7 @@ interface AnalyticsData {
 }
 
 function AdminAnalyticsContent() {
+  const posthog = usePostHog()
   const { logout } = useAdminAuth()
   const router = useRouter()
   const [period, setPeriod] = useState('7d')
@@ -79,6 +81,15 @@ function AdminAnalyticsContent() {
     },
     isLoading: true
   })
+
+  useEffect(() => {
+    if (posthog) {
+      posthog.capture("$pageview", {
+        "$current_url": window.location.href,
+        "page": "/admin/analytics",
+      })
+    }
+  }, [posthog])
 
   useEffect(() => {
     fetchAnalyticsData(period)
