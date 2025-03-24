@@ -10,7 +10,7 @@ import ThemeContextProvider from "@/context/theme-context";
 import ThemeSwitch from "@/components/theme-switch";
 
 export const metadata: Metadata = {
-  title: "Charstream | AI Characters",
+  title: "charstream.xyz | Personalized AI Characters for every moment of your day",
   description: "Chat with AI characters and create your own",
 };
 
