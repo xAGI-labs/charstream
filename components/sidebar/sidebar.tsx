@@ -31,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import  ThemeSwitch  from "@/components/theme-switch"
 
 // Update the SidebarProps interface
 interface SidebarProps {
@@ -139,7 +140,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
         isCollapsed ? "w-[68px]" : "w-[240px]"
       )}>
         {/* Logo Section - Made clickable */}
-        <div className="py-5 px-4 flex items-center justify-between border-b border-border/30">
+        <div className="py-5 px-4 flex items-center justify-between border-b border-border/30 relative">
           <Link href="/" className={cn(
             "flex items-center gap-2", 
             isCollapsed && "justify-center w-full"
@@ -249,39 +250,15 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           <div className="flex-grow overflow-y-auto scrollbar-thin">
             <ConversationList isCollapsed={isCollapsed} />
           </div>
-
-          {/* Favorites Section */}
-          {!isCollapsed && (
-            <div className="px-3 py-3">
-              <h3 className="px-2 mb-2 text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
-                Favorites
-              </h3>
-              <div className="space-y-1">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-2 text-sm h-9 rounded-md text-muted-foreground hover:text-foreground"
-                >
-                  <Avatar className="h-5 w-5">
-                    <AvatarImage src={harryPotterAvatar} alt="Harry Potter" />
-                    <AvatarFallback>HP</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">Harry Potter</span>
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-2 text-sm h-9 rounded-md text-muted-foreground hover:text-foreground"
-                >
-                  <Avatar className="h-5 w-5">
-                    <AvatarImage src={chotaBheemAvatar} alt="Chota Bheem" />
-                    <AvatarFallback>CB</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">Chota Bheem</span>
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Theme Switch Section */}
+        <div className={cn("p-3 flex justify-center transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
+          <div className="w-[4rem] h-[1.5rem]">
+            <ThemeSwitch />
+          </div>
+        </div>
+
 
         {/* User Profile Section */}
         <div className="p-3 border-t border-border/30 mt-auto cursor-pointer">
@@ -318,20 +295,19 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
               )}
             </div>
           )}
-          
-          {!isCollapsed && (
-            <div className="mt-3 flex items-center justify-center gap-3 text-[10px] text-muted-foreground/60">
-              <Link href="#" className="hover:text-muted-foreground">
-                Privacy
-              </Link>
-              <Link href="#" className="hover:text-muted-foreground">
-                Terms
-              </Link>
-              <Link href="#" className="hover:text-muted-foreground">
-                Help
-              </Link>
-            </div>
-          )}
+        </div>
+
+        {/* Footer Links */}
+        <div className={cn("mt-3 flex items-center justify-center gap-3 text-[10px] text-muted-foreground/60 mb-4 transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
+          <Link href="#" className="hover:text-muted-foreground">
+            Privacy
+          </Link>
+          <Link href="#" className="hover:text-muted-foreground">
+            Terms
+          </Link>
+          <Link href="#" className="hover:text-muted-foreground">
+            Help
+          </Link>
         </div>
       </aside>
       

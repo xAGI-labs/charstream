@@ -120,35 +120,6 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
           const imageUrl = conversation.character.imageUrl || 
             `https://robohash.org/${encodeURIComponent(conversation.character.name)}?size=40x40&set=set4`;
           
-          if (isCollapsed) {
-            return (
-              <Tooltip key={conversation.id}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={`/chat/${conversation.id}`}
-                    className={cn(
-                      "flex items-center justify-center p-2 rounded-md mb-1 transition-all",
-                      isActive 
-                        ? "bg-primary/10 text-primary" 
-                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                    )}
-                    title={conversation.title || conversation.character.name}
-                  >
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={imageUrl} alt={conversation.character.name} />
-                      <AvatarFallback className="text-[10px]">
-                        {conversation.character.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  {conversation.title || conversation.character.name}
-                </TooltipContent>
-              </Tooltip>
-            )
-          }
-          
           return (
             <Link
               key={conversation.id}
@@ -159,7 +130,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )}
-              title={conversation.title || conversation.character.name}
+              title={conversation.character.name} // Remove "Conversation With" prefix
             >
               <Avatar className="h-6 w-6 flex-shrink-0">
                 <AvatarImage src={imageUrl} alt={conversation.character.name} />
@@ -167,9 +138,11 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
                   {conversation.character.name.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="truncate text-sm">
-                {conversation.title || conversation.character.name}
-              </span>
+              {!isCollapsed && (
+                <span className="truncate text-sm">
+                  {conversation.character.name} {/* Display only the character's name */}
+                </span>
+              )}
             </Link>
           )
         })}

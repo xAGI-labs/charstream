@@ -1,16 +1,18 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { ClerkProvider } from "@clerk/nextjs"
+import type React from "react";
+import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import "./globals.css"
-import "../styles/clerk.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import "./globals.css";
+import "../styles/clerk.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import ThemeContextProvider from "@/context/theme-context";
+import ThemeSwitch from "@/components/theme-switch";
 
 export const metadata: Metadata = {
   title: "Charstream | AI Characters",
   description: "Chat with AI characters and create your own",
-}
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,34 +26,35 @@ const geistMono = Geist_Mono({
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <ClerkProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
-            storageKey="chatstream-theme"
-          >
-            {children}
-            <Toaster 
-              position="top-center"
-              toastOptions={{
-                style: {
-                  background: "#030303",
-                  color: "#fff",
-                  border: "1px solid #444",
-                }
-              }}
-            />
-          </ThemeProvider>
+          <ThemeContextProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem={false}
+              storageKey="chatstream-theme"
+            >
+              {children}
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    background: "#030303",
+                    color: "#fff",
+                    border: "1px solid #444",
+                  },
+                }}
+              />
+              <ThemeSwitch />
+            </ThemeProvider>
+          </ThemeContextProvider>
         </ClerkProvider>
       </body>
     </html>
-  )
+  );
 }
 
