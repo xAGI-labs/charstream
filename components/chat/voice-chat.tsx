@@ -48,6 +48,10 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   const [lastAIMessage, setLastAIMessage] = useState("")
   const [continuousMode, setContinuousMode] = useState(false)
   const [callActive, setCallActive] = useState(false)
+  const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
+  const [liveAITranscript, setLiveAITranscript] = useState<string>("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [earlyTranscript, setEarlyTranscript] = useState<string>("");
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -185,6 +189,9 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
         clearInterval(timerRef.current)
         timerRef.current = null
       }
+      
+      // Show transcribing state immediately
+      setIsTranscribing(true);
     } else {
       console.warn("No active recording to stop")
     }
@@ -217,6 +224,24 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       console.log("Processing audio blob, size:", audioBlob.size)
       setIsProcessing(true)
       
+      // Do early transcription to show user input immediately
+      try {
+        setIsTranscribing(true);
+        const { transcribeAudio } = await import('@/lib/openai');
+        const transcript = await transcribeAudio(audioBlob);
+        
+        if (transcript) {
+          console.log("Early transcript:", transcript);
+          setEarlyTranscript(transcript);
+          setLastUserMessage(transcript);
+          setLiveUserTranscript(transcript);
+          setIsTranscribing(false);
+        }
+      } catch (transcriptError) {
+        console.error("Error with early transcription:", transcriptError);
+        setIsTranscribing(false);
+      }
+      
       // Create form data to send to API
       const formData = new FormData()
       formData.append('audio_file', audioBlob, 'recording.webm')
@@ -241,12 +266,13 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       const data = await response.json()
       console.log("Voice API response:", data)
       
-      // Update last messages for display UI only
-      if (data.user_text) {
+      // Update last messages for display UI only if not already set by early transcription
+      if (data.user_text && !lastUserMessage) {
         setLastUserMessage(data.user_text)
+        setLiveUserTranscript(data.user_text);
       }
       
-      // Update AI message and clean any "*As character*:" prefix
+      // Update AI message as soon as it's available
       if (data.ai_text) {
         let cleanedResponse = data.ai_text
         // Remove any "*As character*:" prefix if present
@@ -254,12 +280,18 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
           cleanedResponse = cleanedResponse.replace(/\*As [^*]+\*:\s*/, '')
         }
         setLastAIMessage(cleanedResponse)
+        setLiveAITranscript(cleanedResponse);
+        
+        // Refresh messages to show the AI response in the chat history immediately
+        await onMessageSent("__REFRESH_MESSAGES__")
+        
+        // Processing is complete, even though we're still waiting for audio
+        setIsProcessing(false)
       }
       
-      // Play audio response
+      // Play audio response if available
       if (data.audio_data) {
         console.log("Playing audio response")
-        setIsProcessing(false)
         setIsResponding(true)
         
         const responseAudio = new Audio(data.audio_data)
@@ -280,18 +312,6 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
         })
         
         responseAudio.play()
-        
-        // Also initiate an immediate refresh to ensure the database message is captured
-        if (data.conversation_id) {
-          try {
-            // Slight delay to ensure database writes are completed
-            setTimeout(async () => {
-              await onMessageSent("__REFRESH_MESSAGES__")
-            }, 500)
-          } catch (error) {
-            console.error("Error triggering message refresh:", error)
-          }
-        }
       } else {
         console.error("No audio data in response")
         setIsProcessing(false)
@@ -441,6 +461,15 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
                 <Square className="h-6 w-6" />
               </Button>
             </div>
+          ) : isTranscribing ? (
+            // Transcribing state (new)
+            <Button
+              type="button"
+              disabled={true}
+              className="rounded-full h-14 w-14 bg-yellow-500 opacity-70 cursor-not-allowed"
+            >
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </Button>
           ) : isProcessing ? (
             // Processing state
             <Button
@@ -487,6 +516,8 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
           "Click to start voice call"
         ) : isRecording ? (
           "Recording... Click to stop"
+        ) : isTranscribing ? (
+          "Transcribing your speech..."
         ) : isProcessing ? (
           "Processing your message..."
         ) : isResponding ? (

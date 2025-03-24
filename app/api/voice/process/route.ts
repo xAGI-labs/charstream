@@ -89,6 +89,34 @@ export async function POST(req: Request) {
       );
     }
     
+    // Create a conversation if not exists
+    let conversation = await prisma.conversation.findFirst({
+      where: {
+        userId: userId,
+        characterId: character.id
+      }
+    });
+    
+    if (!conversation) {
+      console.log("Creating new conversation");
+      conversation = await prisma.conversation.create({
+        data: {
+          userId: userId,
+          characterId: character.id,
+          title: `Chat with ${character.name}`
+        }
+      });
+    }
+    
+    // Create user message in database right after transcription
+    const userMessage = await prisma.message.create({
+      data: {
+        content: userText || "Empty message", // Fallback for null content
+        role: "user",
+        conversationId: conversation.id
+      }
+    });
+    
     // Step 2: Generate AI response
     console.log(`Generating response from ${character.name}`);
     
@@ -120,13 +148,13 @@ export async function POST(req: Request) {
     - Stay in character at all times and respond as ${character.name} would`;
     
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-3.5-turbo", // Use a faster model
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userText }
       ],
-      max_tokens: 300,
-      temperature: isUnhinged ? 0.9 : 0.7, // Higher temperature for unhinged mode
+      max_tokens: 200, // Reduce token limit for faster responses
+      temperature: isUnhinged ? 0.8 : 0.6, // Adjust temperature for quicker responses
     });
     
     const aiTextResponse = chatCompletion.choices[0]?.message?.content || "";
@@ -138,6 +166,15 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+    
+    // Create AI message in database as soon as text is available
+    const aiMessage = await prisma.message.create({
+      data: {
+        content: aiTextResponse || "No response", // Fallback for null content
+        role: "assistant",
+        conversationId: conversation.id
+      }
+    });
     
     // Step 3: Convert response to speech
     console.log("Converting to speech with TTS API...");
@@ -155,43 +192,6 @@ export async function POST(req: Request) {
     const audioBase64 = audioBuffer.toString('base64');
     
     console.log("Creating message records in database...");
-    
-    // Create a conversation if not exists
-    let conversation = await prisma.conversation.findFirst({
-      where: {
-        userId: userId,
-        characterId: character.id
-      }
-    });
-    
-    if (!conversation) {
-      console.log("Creating new conversation");
-      conversation = await prisma.conversation.create({
-        data: {
-          userId: userId,
-          characterId: character.id,
-          title: `Chat with ${character.name}`
-        }
-      });
-    }
-    
-    // Create user message in database
-    const userMessage = await prisma.message.create({
-      data: {
-        content: userText || "Empty message", // Fallback for null content
-        role: "user",
-        conversationId: conversation.id
-      }
-    });
-    
-    // Create AI message in database
-    const aiMessage = await prisma.message.create({
-      data: {
-        content: aiTextResponse || "No response", // Fallback for null content
-        role: "assistant",
-        conversationId: conversation.id
-      }
-    });
     
     // Update conversation timestamp to mark as recently updated
     await prisma.conversation.update({

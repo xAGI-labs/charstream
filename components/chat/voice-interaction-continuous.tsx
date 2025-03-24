@@ -44,7 +44,8 @@ export function VoiceInteractionContinuous({
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center">
       <div className="bg-background/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg max-w-md w-full">
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-lg font-semibold">Voice Call</div>
           <Button
             onClick={onEndCall}
             variant="destructive"
@@ -54,6 +55,28 @@ export function VoiceInteractionContinuous({
             <PhoneOff className="h-4 w-4" />
             <span className="ml-2">End Call</span>
           </Button>
+        </div>
+        
+        {/* Display live transcripts in a more structured way */}
+        <div className="mb-6 border rounded-lg p-3 bg-muted/30 max-h-[120px] overflow-y-auto">
+          {lastUserMessage ? (
+            <div className="flex flex-col gap-2">
+              <div className="text-sm">
+                <span className="font-semibold">You: </span>
+                <span>{lastUserMessage}</span>
+              </div>
+              {lastAIMessage && (
+                <div className="text-sm">
+                  <span className="font-semibold">{characterName}: </span>
+                  <span>{lastAIMessage}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground text-center py-2">
+              Your conversation will appear here
+            </div>
+          )}
         </div>
         
         <AnimatePresence mode="wait">
@@ -78,12 +101,7 @@ export function VoiceInteractionContinuous({
               <div className="text-xl font-semibold mb-2 text-red-500">
                 {formatTime(recordingTime)}
               </div>
-              <p className="text-muted-foreground mb-4">Recording your message...</p>
-              {lastUserMessage && (
-                <div className="mt-4 text-sm opacity-75 max-w-xs overflow-hidden text-ellipsis">
-                  Last message: "{lastUserMessage}"
-                </div>
-              )}
+              <p className="text-muted-foreground mb-2">Recording your message...</p>
             </motion.div>
           )}
           
@@ -130,16 +148,10 @@ export function VoiceInteractionContinuous({
               <Button 
                 onClick={onInterrupt}
                 variant="outline"
-                className="mb-4"
+                className="mb-2"
               >
                 Interrupt
               </Button>
-              
-              {lastAIMessage && (
-                <div className="mt-2 text-sm opacity-75 max-w-xs overflow-hidden text-ellipsis">
-                  "{lastAIMessage}"
-                </div>
-              )}
             </motion.div>
           )}
           
@@ -158,12 +170,6 @@ export function VoiceInteractionContinuous({
                 Call Active
               </div>
               <p className="text-muted-foreground">Ready for your next message</p>
-              
-              {lastAIMessage && (
-                <div className="mt-4 text-sm opacity-75 max-w-xs overflow-hidden text-ellipsis">
-                  Last response: "{lastAIMessage}"
-                </div>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
