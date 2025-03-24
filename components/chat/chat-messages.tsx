@@ -52,6 +52,12 @@ export function ChatMessages({
     if (user) setUserImgError(false);
   }, [user?.imageUrl]);
 
+  // Debugging: Log character image URL and error state
+  useEffect(() => {
+    console.log("Character image URL:", character?.imageUrl);
+    console.log("Character image error state:", characterImgError);
+  }, [character?.imageUrl, characterImgError]);
+
   // Use the character's imageUrl directly from database, with fallback
   const characterAvatarUrl = !characterImgError && character?.imageUrl 
     ? character.imageUrl
@@ -119,7 +125,10 @@ export function ChatMessages({
                   alt={character?.name || "AI"}
                   fill
                   className="object-cover"
-                  onError={() => setCharacterImgError(true)}
+                  onError={() => {
+                    console.error("Failed to load character avatar:", characterAvatarUrl);
+                    setCharacterImgError(true);
+                  }}
                   priority 
                 />
               ) : (
