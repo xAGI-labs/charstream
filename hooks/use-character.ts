@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@clerk/nextjs"
+// Simulate Recall SDK integration
+import { queryContext, getContext } from "../recallIntegration";
 
 interface Character {
   id: string;
