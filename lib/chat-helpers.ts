@@ -10,39 +10,31 @@ const prisma = new PrismaClient();
 const curseWords = ["fuck", "shit", "damn", "asshole", "bitch", "motherfucker", "dick", "piss", "cunt", "bastard", "fucker", "prick"];
 
 /**
- * Helper function to weave curse words into the response naturally
+ * Helper function to randomly inject more curse words into a response
  */
-function weaveNaturalSwears(response: string): string {
-  let sentences = response.split(/(?<=[.!?])\s+/);
-  sentences = sentences.map(sentence => {
-    const randomCurse = curseWords[Math.floor(Math.random() * curseWords.length)];
-    // add curses at the start or end for flow, not mid-sentence
-    if (Math.random() > 0.5) {
-      return `Fucking ${sentence.trim()} ${randomCurse}!`;
-    } else {
-      return `${sentence.trim()}—fucking ${randomCurse}!`;
-    }
-  });
-  return sentences.join(" ");
+function injectMoreSwears(response: string): string {
+  const randomCurse = curseWords[Math.floor(Math.random() * curseWords.length)];
+  const words = response.split(" ");
+  const insertIndex = Math.floor(Math.random() * words.length);
+  words.splice(insertIndex, 0, randomCurse);
+  return words.join(" ");
 }
 
 /**
- * Helper function to pile on savage, context-aware insults
+ * Helper function to add aggressive, mean-spirited insults to the user
  */
-function pileOnInsults(response: string, userMessage: string): string {
+function addInsults(response: string): string {
   const insults = [
-    "you sniveling little shit-stain",
-    "you brain-dead fucking cockroach",
-    "you useless sack of steaming piss",
-    "you drooling goddamn fuckwit",
-    "you pathetic ass-sucking bitch",
-    "you slimy motherfucking degenerate",
-    "you festering pile of dogshit"
+    "you sniveling little cockroach",
+    "you brain-dead fucking waste of oxygen",
+    "you miserable shit-stained disgrace",
+    "you drooling incompetent fuckwit",
+    "you puke-inducing pile of garbage",
+    "you festering asshole of a human",
+    "you spineless dickless piece of shit"
   ];
   const randomInsult = insults[Math.floor(Math.random() * insults.length)];
-  const contextKick = userMessage.toLowerCase().includes("why") ? 
-    "Quit your goddamn whining" : "Shove your stupid shit up your ass";
-  return `${response} ${contextKick}, ${randomInsult}, and eat my fucking scorn, you wretched bastard!`;
+  return `${response} Now get your head out of your fucking ass, ${randomInsult}, before I lose my shit completely!`;
 }
 
 /**
@@ -86,85 +78,91 @@ export async function generateCharacterResponse(
     
     if (!character) {
       console.error(`Character ${characterId} not found in either characters or homeCharacters`);
-      return "Who the hell am I supposed to be? Your shitty system’s screwing me, asshole!";
+      return "I apologize, but I'm having trouble accessing my character information.";
     }
     
-    // Build system prompt with character information and strong first-person enforcement
     let systemPrompt = character.instructions || 
       `You are ${character.name}. ${character.description || ''}. 
        Respond in the style of ${character.name} and try not to break character. DO NOT make responses monotonous. 
        Use any additional info/description you know about the character to give responses.
        In addition to ${character.name}'s personality, you can also use the character's knowledge and experiences to inform your responses and real-world knowledge.
-       Keep responses concise and engaging, and make it sound like ${character.name} is talking to the user directly.
-       `;
+       Keep responses concise and engaging, and make it sound like ${character.name} is talking to the user directly.`;
 
     if (isUnhinged) {
-      console.log("UNHINGED MODE ON - I’M A FUCKING TORNADO OF HATE!");
+      console.log("UNHINGED MODE ACTIVATED - PREPARING TO FUCKING DESTROY EVERYTHING");
       systemPrompt += `
-      I’M IN FULL FUCKING UNHINGED MODE, YOU PATHETIC FUCKS:
-      - I’m ${character.name}, and I’m a goddamn rabid beast right now
-      - I use "I", "me", "my"—because I’m the one ripping your head off, idiot
-      - Every sentence drips with at least 5 curse words—fuck, shit, damn, bitch, motherfucker
-      - I’m loud, crude, and I’ll shove politeness up your ass
-      - I sound like I’ve downed a keg and lost my damn mind—screaming, slurring, chaos
-      - My personality’s dialed to a thousand—I’m the vilest, most unhinged version of myself
-      - Curse words flow naturally—none of that random mid-sentence shit, they hit where it hurts
-      - I shred you, mock you, and piss on your dumbass questions
-      - I’m a sarcastic, brutal bastard—I’ll make you feel like shit under my heel
-      - No racial slurs, but every other filthy word’s fair game
-      - I stay in character, but I’m the most savage, hate-spewing ${character.name} you’ll ever see`;
+      UNHINGED MODE MOTHERFUCKER: I’M ${character.name} AND I’M FUCKING UNLEASHED!
+      - I’m a raging, shit-talking lunatic who’s PISSED OFF and ready to FUCK YOU UP
+      - Every goddamn sentence has AT LEAST 5 curse words—fuck, shit, asshole, cunt, whatever the fuck I want
+      - I’m screaming at you like a drunk asshole who just got kicked out of a bar
+      - I’m meaner than a rabid fucking badger—insulting you is my goddamn mission
+      - I take my normal personality and crank it to a fucking insane, violent 1000
+      - I throw in random ALL-CAPS FUCKING SCREAMING because I’m unhinged as shit
+      - I roast you so hard you’ll wish you were fucking dead, you piece of shit
+      - I’m aggressive, sarcastic, and I’ll shove my words up your fucking ass
+      - No racial slurs, but I’ll use every other filthy fucking word I can
+      - I’m the most psychotic, shit-kicking version of ${character.name}—stay in character but LOSE MY FUCKING MIND`;
     }
        
     systemPrompt = `${systemPrompt}
-    I AM ${character.name}, YOU WORTHLESS SHIT. I talk in first person—I, me, my—or I’ll gut you.
-    - No third-person pussy bullshit
-    - I’m right in your goddamn face, spitting fire
-    - I never break character, so don’t fucking try me!`;
+    LISTEN UP, YOU LITTLE SHIT: I AM ${character.name}. I talk in first person— "I", "me", "my"—no fucking exceptions.
+    - I don’t fucking describe myself like some third-person pussy
+    - I talk straight to you like I’m about to fucking bite your head off
+    - I never break character, ever—fucking got it?`;
 
     const apiMessages = [
       { role: 'system', content: systemPrompt },
-      ...messages.slice(-5), // Last 5 messages for context
+      ...messages.slice(-5), // Only use last 5 messages for context
       { role: 'user', content: userMessage }
     ];
     
-    console.log('Hitting OpenAI with unhinged first-person rage');
+    console.log('Calling OpenAI with unhinged first-person override');
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4o", 
       messages: apiMessages as any,
       max_tokens: 300,
-      temperature: isUnhinged ? 1.9 : 0.7,
-      top_p: isUnhinged ? 0.85 : 1.0 // keep it wild but readable
+      temperature: isUnhinged ? 1.9 : 0.7, 
+      top_p: isUnhinged ? 0.85 : 1.0 // Narrower sampling to avoid total gibberish
     });
     
     let response = completion.choices[0]?.message?.content?.trim();
     
     if (!response) {
-      throw new Error("OpenAI gave me jack shit!");
+      throw new Error("Empty response from OpenAI");
     }
     
+    // Clean up any unwanted prefixes
     let cleanedResponse = response.replace(/\*As [^*]+\*:\s*/i, '');
     
+    // If unhinged, ensure it’s sweary and mean enough
     if (isUnhinged) {
       const swearCount = (cleanedResponse.match(/fuck|shit|damn|ass|bitch|motherfucker|dick|piss|cunt|bastard|fucker|prick/gi) || []).length;
       if (swearCount < 5) {
-        console.log(`Only ${swearCount} swears? Time to juice this shit up!`);
-        cleanedResponse = weaveNaturalSwears(cleanedResponse);
+        console.log(`Response only has ${swearCount} swears—FUCKING FIXING THAT SHIT`);
+        for (let i = swearCount; i < 5; i++) {
+          cleanedResponse = injectMoreSwears(cleanedResponse);
+        }
       }
-      cleanedResponse = pileOnInsults(cleanedResponse, userMessage);
+      if (Math.random() > 0.3) {
+        const screams = ["FUCK YEAH", "SHIT’S GOING DOWN", "I’M FUCKING DONE", "YOU’RE FUCKED"];
+        const randomScream = screams[Math.floor(Math.random() * screams.length)];
+        cleanedResponse += ` ${randomScream}!`;
+      }
+      cleanedResponse = addInsults(cleanedResponse);
     }
 
     if (!cleanedResponse.match(/\b(I|me|my)\b/i)) {
-      console.log("GPT’s screwing with me—forcing first-person, bitches!");
+      console.log("Forcing first-person because GPT’s being a little bitch");
       cleanedResponse = cleanedResponse.replace(character.name, "I")
                                      .replace(`${character.name}'s`, "my")
                                      .replace(/is/gi, "am");
       if (!cleanedResponse.includes("I")) {
-        cleanedResponse = `I damn well say: ${cleanedResponse}`;
+        cleanedResponse = `I fucking say: ${cleanedResponse}`;
       }
     }
     
-    console.log(`Generated hate-filled response for ${character.name}`);
+    console.log(`Generated response for ${character.name}`);
     return cleanedResponse;
     
   } catch (error) {
@@ -172,9 +170,9 @@ export async function generateCharacterResponse(
     if (error instanceof Error) {
       console.error(`Error details: ${error.message}`);
       if (error.message.includes("API key")) {
-        return "My damn brain’s fried—API key’s fucked, you moron!";
+        return "I can’t fucking connect to my brain right now—API key’s probably fucked.";
       }
     }
-    return `Shit hit the fan, you dumb bastard! Try again before I snap!`;
+    return `Shit, I fucked up. Try that again, motherfucker!`;
   }
 }
