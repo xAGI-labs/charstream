@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import  ThemeSwitch  from "@/components/theme-switch"
+import { FaCcDiscover, FaFire } from "react-icons/fa"
 
 // Update the SidebarProps interface
 interface SidebarProps {
@@ -162,7 +163,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn("h-6 w-6 rounded-full text-muted-foreground hover:text-foreground", 
+            className={cn("h-8 w-8 rounded-full text-muted-foreground hover:text-foreground", 
               isCollapsed && "absolute -right-3 bg-background shadow-sm border border-border/40"
             )}
             onClick={toggleCollapsed} // Use the updated function
@@ -174,51 +175,49 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Main Navigation Section - Ensure it grows to fill available space */}
         <div className="flex flex-col flex-grow overflow-hidden min-h-0">
           <div className="px-3 py-4">
             <TooltipProvider delayDuration={300}>
               <div className="space-y-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link href="/">
-                      <Button
-                        variant={pathname === '/' ? "secondary" : "ghost"}
-                        className={cn(
-                          "w-full justify-start gap-3 font-medium",
-                          isCollapsed && "justify-center p-2 h-9 w-9"
-                        )}
-                      >
-                        <Home className={cn("h-4 w-4", 
-                          pathname === '/' ? "text-primary" : "text-muted-foreground")} 
-                        />
-                        {!isCollapsed && <span>Home</span>}
-                      </Button>
-                    </Link>
+                    <Button
+                      onClick={handleCreateClick}
+                      variant="default"
+                      className={cn(
+                        "justify-start w-fit gap-3 font-medium rounded-full p-4 h-10 bg-yellow-300",
+                        isCollapsed && "justify-center p-2 h-9 w-9"
+                      )}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      {!isCollapsed && <span>Create</span>}
+                    </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
-                    <TooltipContent side="right">Home</TooltipContent>
+                    <TooltipContent side="right">Create</TooltipContent>
                   )}
                 </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleCreateClick}
-                      variant="default"
-                      className={cn(
-                        "w-full justify-start gap-3 font-medium",
-                        isCollapsed && "justify-center p-2 h-9 w-9"
-                      )}
-                    >
-                      <PlusCircle className="h-4 w-4" />
-                      {!isCollapsed && <span>New Character</span>}
-                    </Button>
+                    <Link href="/discover">
+                      <Button
+                        variant="secondary"
+                        className={cn(
+                          "w-full justify-start gap-3 font-medium rounded-full p-4 h-10 mt-2 border cursor-pointer",
+                          isCollapsed && "justify-center p-2 h-9 w-9"
+                        )}
+                      >
+                        <FaFire className="h-4 w-4" />
+                        {!isCollapsed && <span>Discover</span>}
+                      </Button>
+                    </Link>
                   </TooltipTrigger>
                   {isCollapsed && (
-                    <TooltipContent side="right">New Character</TooltipContent>
+                    <TooltipContent side="right">Discover</TooltipContent>
                   )}
                 </Tooltip>
+
               </div>
             </TooltipProvider>
           </div>

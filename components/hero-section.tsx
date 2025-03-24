@@ -48,7 +48,7 @@ export function HeroSection() {
   return (
     <div className="relative w-full min-h-[400px] text-white mt-10 hidden md:block">
       {/* Background Image */}
-      <div className="absolute inset-0 z-0 rounded-3xl">
+      <div className="absolute inset-0 z-0 rounded-4xl">
         <Image
           src="/bg-card.jpg"
           alt="Adventure landscape"
