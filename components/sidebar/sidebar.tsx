@@ -185,7 +185,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       onClick={handleCreateClick}
                       variant="default"
                       className={cn(
-                        "justify-start w-fit gap-3 font-medium rounded-full p-4 h-10 bg-yellow-300",
+                        "justify-start w-fit gap-3 text-black font-medium rounded-full p-4 h-10 bg-yellow-300",
                         isCollapsed && "justify-center p-2 h-9 w-9"
                       )}
                     >
@@ -239,7 +239,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           {/* Section Label */}
           {!isCollapsed && (
             <div className="px-4 py-2">
-              <h3 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
+              <h3 className="text-xs font-medium text-neutral-950 dark:text-muted-foreground/70 uppercase tracking-wider">
                 Recent Chats
               </h3>
             </div>
@@ -297,7 +297,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
         </div>
 
         {/* Footer Links */}
-        <div className={cn("mt-3 flex items-center justify-center gap-3 text-[10px] text-muted-foreground/60 mb-4 transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
+        <div className={cn("mt-3 flex items-center justify-center gap-3 text-[10px] text-neutral-950 dark:text-muted-foreground/60 mb-4 transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
           <Link href="#" className="hover:text-muted-foreground">
             Privacy
           </Link>

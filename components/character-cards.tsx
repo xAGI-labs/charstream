@@ -38,14 +38,25 @@ export function CharacterCards() {
       setLoading(true)
       setError(null)
       try {
+        console.log("Fetching characters...")
         const response = await fetch("/api/home-characters?category=all")
+        
         if (!response.ok) {
-          throw new Error(`Failed to fetch characters: ${response.statusText}`)
+          const errorText = await response.text()
+          console.error("API error response:", errorText)
+          throw new Error(`Failed to fetch characters: ${response.status} ${response.statusText}`)
         }
+        
         const data = await response.json()
+        console.log("Fetched data:", data)
 
         if (!Array.isArray(data)) {
+          console.error("Invalid data format:", data)
           throw new Error("Invalid data format received from API")
+        }
+
+        if (data.length === 0) {
+          console.warn("Empty data array received from API")
         }
 
         // Split characters into categories
@@ -58,6 +69,9 @@ export function CharacterCards() {
           .filter((char: any) => char.category === "voice")
           .slice(0, 4)
           .map(mapCharacterData)
+
+        console.log("Processed activities:", activities)
+        console.log("Processed voices:", voices)
 
         setCategories([
           { title: "Try these", characters: activities },
@@ -86,13 +100,40 @@ export function CharacterCards() {
     fetchCharacters()
   }, [])
 
-  const mapCharacterData = (char: any): Character => ({
-    id: char.id,
-    name: char.name,
-    description: char.description || `with ${char.name.split(" ")[0]}`,
-    imageUrl: char.imageUrl || `https://robohash.org/${encodeURIComponent(char.name)}?size=64x64&set=set4`,
-    category: char.category,
-  })
+  const mapCharacterData = (char: any): Character => {
+    // Check if required properties exist
+    if (!char || typeof char !== 'object') {
+      console.error("Invalid character data:", char)
+      // Return a fallback character
+      return {
+        id: `fallback-${Math.random().toString(36).substring(7)}`,
+        name: "Unnamed Character",
+        description: "No description available",
+        imageUrl: `/placeholder.svg`,
+        category: "unknown"
+      }
+    }
+
+    // More robust mapping with fallbacks for each property
+    return {
+      id: char.id || `id-${Math.random().toString(36).substring(7)}`,
+      name: char.name || "Unnamed Character",
+      description: char.description || (char.name ? `with ${char.name.split(" ")[0]}` : "Chat with this character"),
+      imageUrl: isValidImageUrl(char.imageUrl) ? char.imageUrl : `https://robohash.org/${encodeURIComponent(char.name || "unknown")}?size=64x64&set=set4`,
+      category: char.category || "activity",
+    }
+  }
+
+  // Function to validate image URLs
+  const isValidImageUrl = (url: any): boolean => {
+    if (!url || typeof url !== 'string') return false
+    
+    // Check if URL is a data URL or a proper HTTP URL
+    return url.startsWith('data:') || 
+           url.startsWith('http://') || 
+           url.startsWith('https://') || 
+           url.startsWith('/')
+  }
 
   const generateFallbackCharacters = (category: string, count: number): Character[] => {
     const activityData = [
