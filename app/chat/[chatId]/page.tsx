@@ -8,6 +8,7 @@ import { ChatHeader } from "@/components/chat/chat-header"
 import { ChatMessages } from "@/components/chat/chat-messages"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ChatModeSwitcher, ChatMode } from "@/components/chat/chat-mode-switcher"
+import { CharacterInfo } from "@/components/chat/character-info" // Import the new component
 import { useConversation } from "@/hooks/use-conversation"
 import { useSignupDialog } from "@/hooks/use-signup-dialog"
 import { toast } from "sonner"
@@ -160,13 +161,14 @@ export default function ChatPage() {
   const characterData = conversation?.character 
     ? {
         name: conversation.character.name,
-        // Convert null to undefined for imageUrl to satisfy ChatHeader props
+        description: conversation.character.description || "No description available.", // Add description fallback
         imageUrl: conversation.character.imageUrl || undefined
       }
     : (conversation?.characterId 
         ? {
             id: conversation.characterId,
             name: "AI Assistant", // Placeholder name while character loads
+            description: "No description available.",
             imageUrl: undefined
           } 
         : undefined);

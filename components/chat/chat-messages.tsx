@@ -4,6 +4,7 @@ import { Message } from "@prisma/client"
 import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TypingIndicator } from "./typing-indicator"
+import { CharacterInfo } from "./character-info" // Import the CharacterInfo component
 import { User as UserIcon, CheckCircle, Mic } from "lucide-react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { format } from "date-fns"
@@ -16,6 +17,7 @@ interface ChatMessagesProps {
   character?: {
     name: string;
     imageUrl?: string | null;
+    description?: string;
   };
   mode?: ChatMode;
   isAISpeaking?: boolean;
@@ -147,6 +149,17 @@ export function ChatMessages({
   if (!messages || messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+              {/* Character Info */}
+      {character && (
+        <div className="mb-4">
+          <CharacterInfo 
+            name={character.name} 
+            description={character.description || "No description available."} 
+            avatarUrl={character.imageUrl || undefined} // Convert null to undefined
+          />
+        </div>
+      )}
+
         <div className="bg-card/60 p-6 rounded-xl shadow-sm max-w-md text-center">
           <h3 className="font-semibold text-xl mb-2">Start the conversation</h3>
           <p className="text-sm opacity-70">Send a message to begin chatting with {character?.name || 'your AI companion'}.</p>
@@ -170,6 +183,17 @@ export function ChatMessages({
       ref={containerRef} 
       className="flex flex-col space-y-0.5 py-3 px-4 md:px-54 overflow-y-auto h-full scrollbar-thin"
     >
+      {/* Character Info */}
+      {character && (
+        <div className="mb-4">
+          <CharacterInfo 
+            name={character.name} 
+            description={character.description || "No description available."} 
+            avatarUrl={character.imageUrl || undefined} 
+          />
+        </div>
+      )}
+
       {Object.entries(messagesByDate).map(([date, dateMessages], dateIndex) => (
         <div key={date} className="flex flex-col space-y-1.5 md:space-y-1">
           {/* Date indicator */}
