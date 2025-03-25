@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Mic, PhoneOff, Volume2, MicOff, Square, Send, Bug, Repeat } from "lucide-react"
+import { PhoneOff, Volume2, MicOff, Square, Repeat, Mic } from "lucide-react"
 import Image from "next/image"
+import { SiAirplayaudio  } from "react-icons/si";
+import { RiChatVoiceAiFill, RiVoiceAiFill } from "react-icons/ri";
 import { cn } from "@/lib/utils"
 
 interface FullscreenVoiceCallProps {
@@ -22,8 +24,8 @@ interface FullscreenVoiceCallProps {
   onInterrupt: () => void;
   onStopRecording: () => void;
   onStartRecording: () => void;
-  autoListen?: boolean; // Add this prop
-  onAutoListenToggle?: () => void; // Add this handler
+  autoListen?: boolean;
+  onAutoListenToggle?: () => void;
 }
 
 export function FullscreenVoiceCall({
@@ -42,13 +44,15 @@ export function FullscreenVoiceCall({
   onInterrupt,
   onStopRecording,
   onStartRecording,
-  autoListen = false, // Default to false
+  autoListen = false,
   onAutoListenToggle
 }: FullscreenVoiceCallProps) {
   // Add state to track image loading errors
   const [imgError, setImgError] = useState(false);
   const [lastClicked, setLastClicked] = useState<string>('none');
   const [clickCount, setClickCount] = useState(0);
+  const [showCaptions, setShowCaptions] = useState(true);
+  const [isProcessingRequest, setIsProcessingRequest] = useState(false);
   
   // Add refs to buttons for direct access
   const actionButtonRef = useRef<HTMLButtonElement>(null);
@@ -76,30 +80,63 @@ export function FullscreenVoiceCall({
       isRecording,
       isProcessing,
       isResponding,
-      isMuted
+      isMuted,
+      isProcessingRequest
     });
-  }, [isRecording, isProcessing, isResponding, isMuted]);
+  }, [isRecording, isProcessing, isResponding, isMuted, isProcessingRequest]);
 
   // Create direct handlers that bypass all checks
   const directStartRecording = () => {
     console.log("🎯 DIRECT START RECORDING");
     setLastClicked('start');
     setClickCount(prev => prev + 1);
+    setShowCaptions(false); // Hide captions when recording starts
     onStartRecording();
   };
 
   const directStopRecording = () => {
+    // Prevent multiple stop recording requests
+    if (isProcessingRequest) {
+      console.log("🛑 Already processing a request, ignoring duplicate stop");
+      return;
+    }
+    
     console.log("🎯 DIRECT STOP RECORDING");
     setLastClicked('stop');
     setClickCount(prev => prev + 1);
-    onStopRecording();
+    setShowCaptions(true); // Show captions after recording stops
+    setIsProcessingRequest(true);
+    
+    // Add a small delay to prevent potential race conditions
+    setTimeout(() => {
+      onStopRecording();
+      // Reset the processing flag after a reasonable timeout
+      setTimeout(() => {
+        setIsProcessingRequest(false);
+      }, 2000);
+    }, 100);
   };
 
   const directInterrupt = () => {
+    // Prevent multiple interrupt requests
+    if (isProcessingRequest) {
+      console.log("🛑 Already processing a request, ignoring duplicate interrupt");
+      return;
+    }
+    
     console.log("🎯 DIRECT INTERRUPT");
     setLastClicked('interrupt');
     setClickCount(prev => prev + 1);
-    onInterrupt();
+    setIsProcessingRequest(true);
+    
+    // Add a small delay to prevent potential race conditions
+    setTimeout(() => {
+      onInterrupt();
+      // Reset the processing flag after a reasonable timeout
+      setTimeout(() => {
+        setIsProcessingRequest(false);
+      }, 2000);
+    }, 100);
   };
 
   // Don't render if not active
@@ -116,6 +153,10 @@ export function FullscreenVoiceCall({
             url.startsWith('/'));
   };
 
+  // Create a fallback avatar URL using robohash
+  const avatarUrl = characterAvatarUrl || 
+    `https://robohash.org/${encodeURIComponent(characterName)}?size=96x96&set=set4`;
+
   // Add test button to directly trigger processAudio in dev mode
   const isDevMode = process.env.NODE_ENV === 'development';
 
@@ -124,9 +165,9 @@ export function FullscreenVoiceCall({
       {/* Character Avatar and Info */}
       <div className="mb-8 flex flex-col items-center">
         <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 mb-3">
-          {isValidImageUrl(characterAvatarUrl) && !imgError ? (
+          {!imgError ? (
             <Image 
-              src={characterAvatarUrl!}
+              src={avatarUrl}
               alt={characterName}
               fill
               className="object-cover"
@@ -151,38 +192,36 @@ export function FullscreenVoiceCall({
         </div>
       </div>
       
-      {/* Live Transcript Area */}
-      <div className="w-full max-w-2xl mb-10">
-        <div className="bg-card/60 rounded-lg p-6 shadow-sm">
-          <div className="flex flex-col gap-4">
-            {userMessage && (
-              <div className="flex items-start">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center mr-3 flex-shrink-0">
-                  <span className="text-sm font-semibold text-white">You</span>
+      {/* Captions Area */}
+      {showCaptions && (
+        <div className="w-full max-w-2xl mb-10">
+          <div className="rounded-lg p-4 shadow-sm backdrop-blur-sm">
+            {isResponding && aiMessage ? (
+              <div className="text-center p-3 rounded-lg bg-primary/10">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mr-2 flex-shrink-0">
+                    <span className="text-xs font-semibold">{characterName[0]}</span>
+                  </div>
+                  <span className="text-sm font-medium">{characterName}</span>
                 </div>
-                <div className="bg-muted p-3 rounded-lg flex-1">
-                  {userMessage}
-                </div>
+                <p className="text-xs font-normal">{aiMessage}</p>
               </div>
-            )}
-            
-            {aiMessage && (
-              <div className="flex items-start">
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center mr-3 flex-shrink-0">
-                  <span className="text-sm font-semibold">{characterName[0]}</span>
+            ) : userMessage && !isRecording && !isResponding ? (
+              <div className="text-center p-3 rounded-lg bg-muted">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center mr-2 flex-shrink-0">
+                    <span className="text-xs font-semibold text-white">U</span>
+                  </div>
+                  <span className="text-sm font-medium">You</span>
                 </div>
-                <div className="bg-primary/10 p-3 rounded-lg flex-1">
-                  {aiMessage}
-                </div>
+                <p className="text-xs font-normal">{userMessage}</p>
               </div>
-            )}
-            
-            {!userMessage && !aiMessage && (
-              <p className="text-center text-muted-foreground">Your conversation will appear here</p>
+            ) : (
+              <p className="text-center text-muted-foreground">Ready for conversation</p>
             )}
           </div>
         </div>
-      </div>
+      )}
       
       {/* Call Controls */}
       <div className="flex items-center justify-center gap-4 z-50">
@@ -213,6 +252,12 @@ export function FullscreenVoiceCall({
               console.log("🔴 MAIN BUTTON CLICKED - Current state:", 
                 isRecording ? "RECORDING" : isResponding ? "RESPONDING" : "READY");
               
+              // Prevent rapid clicking from causing multiple events
+              if (isProcessingRequest) {
+                console.log("🛑 Button clicked but already processing a request, ignoring");
+                return;
+              }
+              
               if (isRecording) {
                 directStopRecording();
               } else if (isResponding) {
@@ -233,13 +278,12 @@ export function FullscreenVoiceCall({
             data-state={isRecording ? "recording" : isResponding ? "responding" : "ready"}
             data-testid="voice-action-button"
           >
-            {/* Make icon selection explicit and clear */}
             {isRecording === true ? (
-              <Square className="h-8 w-8 text-white" />
+              <RiChatVoiceAiFill className="h-8 w-8 text-white" />
             ) : isResponding === true ? (
-              <Volume2 className="h-8 w-8 text-white" />
+              <SiAirplayaudio className="h-8 w-8 text-white" />
             ) : (
-              <Mic className="h-8 w-8 text-white" />
+              <RiVoiceAiFill className="h-8 w-8 text-white" />
             )}
           </Button>
           
@@ -282,7 +326,6 @@ export function FullscreenVoiceCall({
           <span>{autoListen ? "Auto-Listening On" : "Auto-Listening Off"}</span>
         </Button>
       )}
-            
     </div>
   )
 }

@@ -1,13 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle, ForwardedRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Mic, Square, Loader2, Volume2, PhoneOff, Repeat, MicOff } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { FullscreenVoiceCall } from "./fullscreen-voice-call"
 
 interface VoiceChatProps {
@@ -53,14 +48,14 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   const [recordingTime, setRecordingTime] = useState(0)
   const [lastUserMessage, setLastUserMessage] = useState("")
   const [lastAIMessage, setLastAIMessage] = useState("")
-  const [continuousMode, setContinuousMode] = useState(true) // Default to continuous mode
-  const [callActive, setCallActive] = useState(true) // Default to active call
+  const [continuousMode, setContinuousMode] = useState(false)
+  const [callActive, setCallActive] = useState(true)
   const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
   const [liveAITranscript, setLiveAITranscript] = useState<string>("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [earlyTranscript, setEarlyTranscript] = useState<string>("");
   const [isMuted, setIsMuted] = useState(false);
-  const [autoListen, setAutoListen] = useState(false) // Default to not auto-listen
+  const [autoListen, setAutoListen] = useState(false)
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -68,22 +63,30 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null)
   const { userId } = useAuth()
   
-  // Automatically start call when component mounts, but don't auto-record
+  // Add state for tracking in-flight API requests
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  
+  // Add ref to track the last processed audio hash
+  const lastProcessedAudioRef = useRef<string | null>(null);
+  
+  // Add a request timestamp ref to prevent duplicate requests in quick succession
+  const lastRequestTimeRef = useRef<number>(0);
+  
+  const audioProcessedRef = useRef<boolean>(false);
+  
   useEffect(() => {
     console.log("Voice mode activated - starting call automatically");
     if (onCallActiveChange) onCallActiveChange(true);
     
-    // Small delay before starting to record to allow UI to render
     const timer = setTimeout(() => {
       if (!isRecording && !isProcessing && !isResponding) {
         startRecording();
       }
-    }, 800);
+    }, 600);
     
     return () => clearTimeout(timer);
   }, []);
 
-  // Debug information
   useEffect(() => {
     console.log("VoiceChat props:", { 
       characterId, 
@@ -96,7 +99,6 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
     })
   }, [characterId, disabled, isWaiting, continuousMode, callActive, isUnhinged, characterName])
   
-  // Update the parent component with state changes
   useEffect(() => {
     if (onVoiceStateChange) { 
       onVoiceStateChange(
@@ -185,6 +187,9 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       // Store the active stream for later cleanup
       const streamRef = stream;
       
+      // Reset the audio processed flag when starting a new recording
+      audioProcessedRef.current = false;
+      
       // Set up event handlers
       mediaRecorder.ondataavailable = (event) => {
         console.log("Received audio data chunk of size:", event.data.size)
@@ -213,16 +218,13 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
         // Stop all tracks in the stream
         streamRef.getTracks().forEach(track => track.stop());
         
-        // Process the audio - this will send it to the server
-        processAudio(audioBlob);
-      };
-      
-      // Register error handler
-      mediaRecorder.onerror = (event) => {
-        console.error("MediaRecorder error:", event);
-        toast.error("Recording error", {
-          description: "There was a problem with the microphone"
-        });
+        // Process the audio only if it hasn't been processed yet
+        if (!audioProcessedRef.current) {
+          audioProcessedRef.current = true;
+          processAudio(audioBlob);
+        } else {
+          console.log("Audio already processed, skipping duplicate processing");
+        }
       };
       
       // Start recording with explicit timeout to ensure it completes
@@ -249,9 +251,20 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
     }
   }
   
+  // Stop recording function with debounce protection
   const stopRecording = () => {
     // Log event with timestamp for debugging
     console.log(`⏱️ STOP RECORDING CALLED AT ${new Date().toISOString()}`);
+    
+    // Prevent multiple calls to stopRecording within a short time window
+    const now = Date.now();
+    if (now - lastRequestTimeRef.current < 1000) { // 1 second debounce
+      console.log("🛑 Ignoring duplicate stopRecording call - too soon after previous call");
+      return;
+    }
+    
+    // Update the last request time
+    lastRequestTimeRef.current = now;
     
     try {
       // Always force stop the recording state first
@@ -266,9 +279,6 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       
       // Process the recorder if it exists
       if (mediaRecorderRef.current) {
-        // Track if we need to manually process chunks
-        let manualProcessingNeeded = true;
-        
         try {
           // Try to get any final data
           if (mediaRecorderRef.current.state === 'recording') {
@@ -282,7 +292,7 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
             try {
               mediaRecorderRef.current.stop();
               console.log("✅ MediaRecorder successfully stopped");
-              // If we got here, the onstop event should trigger, but we'll still have a backup
+              // The onstop event will handle processing
             } catch (e) {
               console.error("Failed to stop recorder:", e);
             }
@@ -293,22 +303,22 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
           console.error("Error handling recorder:", e);
         }
         
-        // ALWAYS process the chunks after a delay, regardless of recorder state
-        console.log(`Audio chunks collected: ${audioChunksRef.current.length}`);
-        
-        // Create and process the audio blob
+        // EMERGENCY FALLBACK: Only process manually if the onstop event hasn't fired after a delay
         setTimeout(() => {
-          console.log("Processing audio chunks after timeout");
-          if (audioChunksRef.current.length > 0) {
+          if (!audioProcessedRef.current && audioChunksRef.current.length > 0) {
+            console.log("Emergency fallback: Processing audio chunks after timeout");
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
             console.log(`Created audio blob: ${audioBlob.size} bytes`);
+            audioProcessedRef.current = true;
             processAudio(audioBlob);
-          } else {
-            console.error("No audio chunks to process");
+          } else if (!audioProcessedRef.current) {
+            console.error("No audio chunks to process and onstop didn't fire");
             setIsProcessing(false);
             toast.error("No audio was recorded");
+          } else {
+            console.log("Audio already processed by onstop event, fallback not needed");
           }
-        }, 500);
+        }, 1000); // Longer timeout to give onstop event a chance to fire
       } else {
         console.warn("No media recorder found");
         setIsProcessing(false);
@@ -320,14 +330,49 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
     }
   };
   
+  // Add a function to generate a simple audio hash for deduplication
+  const generateAudioHash = (audioBlob: Blob): string => {
+    return `${characterId}_${audioBlob.size}_${Date.now()}`;
+  };
+  
+  // Process audio function with duplicate detection
   const processAudio = async (audioBlob: Blob) => {
+    // Generate a hash for this audio processing request
+    const audioHash = generateAudioHash(audioBlob);
+    
     // Log values for debugging
     console.log("processAudio called with blob:", {
       size: audioBlob.size,
       type: audioBlob.type,
       userId,
-      characterId
+      characterId,
+      audioHash: audioHash.substring(0, 20) + "..."
     });
+    
+    // Check if we're already processing a request
+    if (isProcessingAudio) {
+      console.log("⚠️ Already processing an audio request, ignoring this one");
+      toast.warning("Processing in progress", {
+        description: "Please wait for the current processing to complete"
+      });
+      setIsProcessing(false);
+      return;
+    }
+    
+    // Check if this is the same audio we just processed (simple hash check)
+    if (lastProcessedAudioRef.current && 
+        lastProcessedAudioRef.current.startsWith(`${characterId}_${audioBlob.size}`)) {
+      console.log("⚠️ Duplicate audio detected, ignoring");
+      toast.warning("Duplicate request", {
+        description: "This appears to be a duplicate request"
+      });
+      setIsProcessing(false);
+      return;
+    }
+    
+    // Update state to indicate processing
+    setIsProcessingAudio(true);
+    lastProcessedAudioRef.current = audioHash;
     
     if (!userId) {
       toast.error("You need to be signed in", {
@@ -469,6 +514,9 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
           throw new Error("Request timed out - server took too long to respond");
         }
         throw fetchError;
+      } finally {
+        // Always reset the processing state after completion or error
+        setIsProcessingAudio(false);
       }
     } catch (error: unknown) {
       console.error("Error processing audio:", error);
@@ -602,7 +650,6 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   // When in voice mode, always show the fullscreen interface
   return (
     <div className="flex-1 flex items-center justify-center w-full h-screen">
-      {/* Always show the fullscreen call UI in voice mode */}
       <FullscreenVoiceCall
         isActive={true}
         characterName={characterName}
