@@ -110,6 +110,8 @@ export async function generateAvatar(name: string, description?: string): Promis
         return imageUrl;
       } catch (error) {
         console.error("OpenAI avatar generation error:", error);
+        // Use placeholder instead of throwing
+        return await getPlaceholderAvatar(name);
       }
     }
 

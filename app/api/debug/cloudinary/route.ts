@@ -20,9 +20,11 @@ export async function GET(req: Request) {
     return NextResponse.json({
       cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'dht33kdwe',
       hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+      hasApiSecret: !!process.env.CLOUDINARY_API_SECRET,
       uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || 'placeholder',
       apiKeyLastFour: process.env.CLOUDINARY_API_KEY ? 
-        `...${process.env.CLOUDINARY_API_KEY.slice(-4)}` : null
+        `...${process.env.CLOUDINARY_API_KEY.slice(-4)}` : null,
+      uploadCredentialsComplete: !!(process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
     });
   } catch (error) {
     console.error("Error checking Cloudinary config:", error);
