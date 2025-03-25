@@ -51,6 +51,11 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
   const [isMobile, setIsMobile] = useState(false)
   const userButtonRef = useRef<HTMLDivElement>(null)
   
+  // Don't render sidebar on admin routes
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+  
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -124,7 +129,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
     <>
       <aside className={cn(
         "border-r border-border/40 flex flex-col transition-all duration-300 relative bg-sidebar shadow-sm",
-        "h-full min-h-screen",
+        "h-screen",
         isCollapsed ? "w-[68px]" : "w-[240px]"
       )}>
         <div className="py-5 px-4 flex items-center justify-between border-b border-border/30 relative">
