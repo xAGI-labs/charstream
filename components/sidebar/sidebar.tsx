@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAuth, useUser, UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -34,7 +34,6 @@ import {
 import  ThemeSwitch  from "@/components/theme-switch"
 import { FaCcDiscover, FaFire } from "react-icons/fa"
 
-// Update the SidebarProps interface
 interface SidebarProps {
   setIsOpen?: (open: boolean) => void;
   onCollapsedChange?: (collapsed: boolean) => void;
@@ -48,43 +47,36 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const userButtonRef = useRef<HTMLDivElement>(null)
   
-  // Detect mobile screen size
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
     
-    // Initial check
     checkIsMobile()
     
-    // Add event listener for window resize
     window.addEventListener('resize', checkIsMobile)
     
-    // Cleanup
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
   
-  // Load collapsed state from localStorage on component mount
   useEffect(() => {
     const savedCollapsedState = localStorage.getItem('sidebarCollapsed')
     if (savedCollapsedState !== null && !isMobile) {
       setIsCollapsed(JSON.parse(savedCollapsedState))
-      // Notify parent component on initial load
       if (onCollapsedChange) {
         onCollapsedChange(JSON.parse(savedCollapsedState))
       }
     }
   }, [isMobile, onCollapsedChange])
   
-  // Save collapsed state to localStorage whenever it changes
   useEffect(() => {
     if (!isMobile) {
       localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed))
     }
   }, [isCollapsed, isMobile])
   
-  // Check if we're in a chat route
   const isChatRoute = pathname?.startsWith('/chat')
   
   const handleCreateClick = () => {
@@ -96,51 +88,43 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
     setIsCreateDialogOpen(true)
   }
   
-  // Get user's first name or username for display
   const displayName = user?.firstName || user?.username || "Guest"
   
-  // Pre-define avatar URLs with cache parameter and timestamp to ensure long-term caching
   const harryPotterAvatar = `/api/avatar?name=Harry%20Potter&width=20&height=20&cache=true&t=1`
   const chotaBheemAvatar = `/api/avatar?name=Chota%20Bheem&width=20&height=20&cache=true&t=1`
 
-  // Update the collapsed state and notify parent
   const toggleCollapsed = () => {
     const newCollapsedState = !isCollapsed
     setIsCollapsed(newCollapsedState)
     
-    // Notify parent component
     if (onCollapsedChange) {
       onCollapsedChange(newCollapsedState)
     }
     
-    // Save to localStorage
     if (!isMobile) {
       localStorage.setItem('sidebarCollapsed', JSON.stringify(newCollapsedState))
     }
   }
 
-  // Render mobile navigation on small screens
   if (isMobile) {
     return (
       <MobileNavigation 
         setSignupOpen={setSignupOpen}
         setCreateDialogOpen={setIsCreateDialogOpen}
         isCreateDialogOpen={isCreateDialogOpen}
-        isSignedIn={!!isSignedIn} // Convert to boolean with double negation
+        isSignedIn={!!isSignedIn}
         displayName={displayName}
       />
     )
   }
 
-  // Desktop sidebar view
   return (
     <>
       <aside className={cn(
         "border-r border-border/40 flex flex-col transition-all duration-300 relative bg-sidebar shadow-sm",
-        "h-full min-h-screen", // Ensure sidebar always has full height
+        "h-full min-h-screen",
         isCollapsed ? "w-[68px]" : "w-[240px]"
       )}>
-        {/* Logo Section - Made clickable */}
         <div className="py-5 px-4 flex items-center justify-between border-b border-border/30 relative">
           <Link href="/" className={cn(
             "flex items-center gap-2", 
@@ -159,14 +143,13 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
             {!isCollapsed && <span className="text-sm font-semibold">charstream.xyz</span>}
           </Link>
 
-          {/* Collapse Button */}
           <Button 
             variant="ghost" 
             size="icon" 
             className={cn("h-8 w-8 rounded-full text-muted-foreground hover:text-foreground", 
               isCollapsed && "absolute -right-3 bg-background shadow-sm border border-border/40"
             )}
-            onClick={toggleCollapsed} // Use the updated function
+            onClick={toggleCollapsed}
           >
             {isCollapsed ? 
               <ChevronRight className="h-3.5 w-3.5" /> : 
@@ -222,7 +205,6 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
             </TooltipProvider>
           </div>
 
-          {/* Search Bar - Only in expanded mode */}
           {!isCollapsed && (
             <div className="px-3 mb-2">
               <div className="relative">
@@ -236,7 +218,6 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Section Label */}
           {!isCollapsed && (
             <div className="px-4 py-2">
               <h3 className="text-xs font-medium text-neutral-950 dark:text-muted-foreground/70 uppercase tracking-wider">
@@ -245,29 +226,31 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Conversations List */}
           <div className="flex-grow overflow-y-auto scrollbar-thin">
             <ConversationList isCollapsed={isCollapsed} />
           </div>
         </div>
 
-        {/* Theme Switch Section */}
         <div className={cn("p-3 flex justify-center transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
           <div className="w-[4rem] h-[1.5rem]">
             <ThemeSwitch />
           </div>
         </div>
 
-
-        {/* User Profile Section */}
-        <div className="p-3 border-t border-border/30 mt-auto cursor-pointer">
+        <div className="p-3 border-t border-border/30 mt-auto">
           {isSignedIn ? (
-            <div className={cn(
-              "flex items-center",
-              isCollapsed ? "justify-center" : "justify-between p-2 bg-background/40 rounded-md"
-            )}>
-              <div className="flex items-center gap-2">
-                <UserButton afterSignOutUrl="/" />
+            <div 
+              className={cn(
+                "flex items-center",
+                isCollapsed ? "justify-center" : "justify-between p-3 bg-background/40 rounded-full cursor-pointer"
+              )}
+              onClick={() => userButtonRef.current?.querySelector('button')?.click()}
+              role="button"
+            >
+              <div className="flex items-center gap-2 mt-0.5">
+                <div ref={userButtonRef}>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
                 {!isCollapsed && <span className="text-sm font-medium">{displayName}</span>}
               </div>
               {!isCollapsed && (
@@ -296,7 +279,6 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           )}
         </div>
 
-        {/* Footer Links */}
         <div className={cn("mt-3 flex items-center justify-center gap-3 text-[10px] text-neutral-950 dark:text-muted-foreground/60 mb-4 transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
           <Link href="#" className="hover:text-muted-foreground">
             Privacy
@@ -310,7 +292,6 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
         </div>
       </aside>
       
-      {/* Character creation dialog */}
       <CreateCharacterDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
