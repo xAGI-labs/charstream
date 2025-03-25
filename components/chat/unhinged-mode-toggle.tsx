@@ -136,15 +136,15 @@ export function UnhingedModeToggle({
       {currentAddon && (
         <div className="mr-3">
           {currentAddon === 'beer' ? (
-            <img src="/beer.svg" alt="Beer" className="h-8 w-8 animate-bounce" />
+            <img src="/beer.svg" alt="Beer" className="h-8 w-8 animate-pulse" />
           ) : (
-            <img src="/joint.svg" alt="Joint" className="h-8 w-8 animate-bounce" />
+            <img src="/joint.svg" alt="Joint" className="h-8 w-8 animate-pulse" />
           )}
         </div>
       )}
 
       {remainingTime && isUnhinged && (
-        <span className="text-xs text-muted-foreground mr-2">
+        <span className="text-sm bg-amber-300 rounded-full px-3 py-1 text-neutral-950 mr-2">
           {formatTime(remainingTime)}
         </span>
       )}
@@ -152,7 +152,7 @@ export function UnhingedModeToggle({
       <div
         className={cn(
           "relative w-16 h-8 flex items-center rounded-full cursor-pointer transition-colors",
-          isUnhinged ? "bg-amber-500" : "bg-muted animate-pulse"
+          isUnhinged ? "bg-amber-500" : "bg-neutral-400 dark:bg-muted animate-pulse"
         )}
         onClick={handleToggleClick}
         aria-label="Toggle unhinged mode"
@@ -161,7 +161,7 @@ export function UnhingedModeToggle({
         <div
           className={cn(
             "absolute w-6 h-6 bg-white rounded-full shadow-md transition-transform",
-            isUnhinged ? "translate-x-8" : "translate-x-0"
+            isUnhinged ? "translate-x-9" : "translate-x-1"
           )}
         />
       </div>

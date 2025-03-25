@@ -53,7 +53,7 @@ export function HeroSection() {
           src="/bg-card.jpg"
           alt="Adventure landscape"
           fill
-          className="object-cover opacity-80 rounded-xl"
+          className="object-cover rounded-xl"
           priority
         />
       </div>

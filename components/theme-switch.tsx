@@ -9,11 +9,11 @@ export default function ThemeSwitch() {
 
   return (
     <div
-      className="fixed w-[4rem] h-[2rem] bg-gray-300 dark:bg-neutral-500 rounded-full flex items-center p-1 cursor-pointer shadow-2xl transition-all"
+      className="fixed w-[4rem] h-[2rem] bg-gray-300 dark:bg-neutral-400 rounded-full flex items-center p-1 cursor-pointer shadow-2xl transition-all"
       onClick={toggleTheme}
     >
       <div
-        className={`w-[1.5rem] h-[1.5rem] bg-white dark:bg-gray-950 rounded-full flex items-center justify-center transition-transform ${
+        className={`w-[1.5rem] h-[1.5rem] bg-white dark:bg-neutral-900 rounded-full flex items-center justify-center transition-transform ${
           theme === "light" ? "translate-x-0" : "translate-x-[2rem]"
         }`}
       >
