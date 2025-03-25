@@ -73,21 +73,22 @@ export function ChatMessages({
     if (containerRef.current) {
       const container = containerRef.current;
       
-      // Check if user is already near the bottom before forcing scroll
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      
-      // Only auto-scroll if user is already near bottom or if it's a new message/waiting state
-      if (isNearBottom || isWaiting) {
-        // Use requestAnimationFrame for smoother scrolling
-        requestAnimationFrame(() => {
-          container.scrollTo({
-            top: container.scrollHeight,
-            behavior: 'smooth'
-          });
+      // Always scroll to bottom for new messages, with smooth animation
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
         });
-      }
+      });
     }
   }, [messages, isWaiting]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
 
   // For debugging
   useEffect(() => {
