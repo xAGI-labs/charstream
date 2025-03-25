@@ -168,12 +168,15 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       onClick={handleCreateClick}
                       variant="default"
                       className={cn(
-                        "justify-start w-fit gap-3 text-black font-medium rounded-full p-4 h-10 bg-yellow-300",
-                        isCollapsed && "justify-center items-center p-2 h-9 w-9 bg-yellow-300"
+                        "justify-start w-fit gap-3 text-black font-extralight rounded-full bg-yellow-300 hover:bg-yellow-400 cursor-pointer",
+                        isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-14"
                       )}
                     >
-                      <PlusCircle className="h-4 w-4" />
-                      {!isCollapsed && <span>Create</span>}
+                      <PlusCircle className={cn(
+                        "transition-all",
+                        isCollapsed ? "h-5 w-5" : "h-8 w-8"
+                      )} />
+                      {!isCollapsed && <span className="text-lg font-semibold">Create</span>}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
@@ -187,8 +190,8 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       <Button
                         variant="secondary"
                         className={cn(
-                          "w-full justify-start gap-3 font-medium rounded-full p-4 h-10 mt-2 border cursor-pointer",
-                          isCollapsed && "justify-center items-center p-2 h-9 w-9"
+                          "w-full justify-start gap-3 font-medium rounded-full mt-2 border cursor-pointer",
+                          isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-10"
                         )}
                       >
                         <FaFire className="h-4 w-4" />
