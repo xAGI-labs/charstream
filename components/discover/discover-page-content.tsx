@@ -19,6 +19,7 @@ export default function DiscoverPageContent() {
   const [filteredCharacters, setFilteredCharacters] = useState<Character[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -83,8 +84,45 @@ export default function DiscoverPageContent() {
     }
   }
 
-  const handleCharacterClick = (character: Character) => {
-    router.push(`/chat/new?character=${character.id}`)
+  const handleCharacterClick = async (character: Character) => {
+    try {
+      // Show loading state
+      setIsCreatingConversation(true)
+      toast.loading("Starting conversation...", { id: "creating-conversation" })
+
+      // Create a new conversation with this character
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ 
+          characterId: character.id,
+          initialMessage: `Hello, I'm ${character.name}! How can I help you today?`
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`Server error: ${response.status} - ${errorText}`)
+        throw new Error(`Failed to create conversation: ${response.statusText} - ${errorText}`)
+      }
+
+      const data = await response.json()
+      console.log("Conversation created:", data)
+      toast.success(`Chat with ${character.name} created successfully`, { id: "creating-conversation" })
+
+      // Redirect to the new conversation
+      router.push(`/chat/${data.id}`)
+    } catch (error) {
+      console.error("Error creating conversation:", error)
+      toast.error("Failed to start chat", {
+        id: "creating-conversation",
+        description: "Please try again later."
+      })
+    } finally {
+      setIsCreatingConversation(false)
+    }
   }
 
   const getForYouCharacters = () => {
