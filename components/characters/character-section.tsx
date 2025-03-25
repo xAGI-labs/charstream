@@ -8,6 +8,7 @@ import { ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Character, CharacterCard } from "./character-card"
 import { toast } from "sonner"
+import Link from "next/link"
 
 interface CharacterSectionProps {
   title: string
@@ -84,7 +85,6 @@ export function CharacterSection({ title, category }: CharacterSectionProps) {
       setIsLoading(true)
       console.log(`Creating conversation for character: ${characterId}`)
       
-      // Create a new conversation with this character
       const response = await fetch("/api/conversations", {
         method: "POST",
         headers: { 
@@ -102,7 +102,6 @@ export function CharacterSection({ title, category }: CharacterSectionProps) {
       const data = await response.json()
       console.log("Conversation created successfully:", data)
       
-      // Redirect to the chat page
       router.push(`/chat/${data.id}`)
     } catch (error) {
       console.error("Error creating conversation:", error)
@@ -115,17 +114,19 @@ export function CharacterSection({ title, category }: CharacterSectionProps) {
   }
   
   return (
-    <section className="mb-8">
+    <section className="mb-8"> 
+
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-gray-300">{title}</h2>
-        <Button variant="ghost" size="sm" className="h-7 text-xs text-gray-400 hover:text-white">
-          See all <ChevronRight className="ml-1 h-3 w-3" />
-        </Button>
+        <h2 className="text-sm font-medium text-neutral-950 dark:text-gray-300">{title}</h2>
+        <Link href={`/discover`}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs text-neutral-950 dark:text-gray-400 hover:text-yellow-800 dark:hover:text-white">
+            See all <ChevronRight className="ml-1 h-3 w-3" />
+          </Button>
+        </Link>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {isFetching ? (
-          // Show loading placeholders
           Array(4).fill(0).map((_, i) => (
             <div 
               key={i} 

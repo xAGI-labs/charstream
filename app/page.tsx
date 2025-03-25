@@ -10,7 +10,7 @@ import { HeroSection } from "@/components/hero-section"
 import { CharacterSection } from "@/components/characters/character-section"
 import { CreateCharacterSection } from "@/components/create-character-section"
 import { preloadDefaultAvatars } from "@/lib/preload-avatars"
-import { CharacterCards } from "@/components/character-cards" // Ensure no conflicting imports
+import { CharacterCards } from "@/components/character-cards"
 import CharacterFooter from "@/components/FooterBar"
 
 export default function Home() {
@@ -54,7 +54,7 @@ export default function Home() {
           <section className="py-12">
             <CharacterSection title="Popular Characters" category="popular" />
           </section>
-          <section className="py-12 bg-muted/10 rounded-lg">
+          <section className="py-12 rounded-lg">
             <CharacterSection title="Educational Characters" category="educational" />
           </section>
           <section className="py-12">

@@ -19,7 +19,6 @@ export function CharacterCard({ character, onClick, disabled }: CharacterCardPro
   const [imgError, setImgError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Debug character data including image URL type
   useEffect(() => {
     const imageUrlType = character.imageUrl ? 
       (character.imageUrl.includes('cloudinary') ? 'cloudinary' : 
@@ -35,13 +34,12 @@ export function CharacterCard({ character, onClick, disabled }: CharacterCardPro
       imageUrl: character.imageUrl?.substring(0, 50)
     });
     
-    // Set loading state based on image URL availability
+    // set loading state based on image avail
     if (character.imageUrl) {
       setIsLoading(false);
     }
   }, [character]);
   
-  // Empty image placeholder - will show a colored div when no image is available
   const EmptyImagePlaceholder = () => (
     <div className="w-full h-full bg-gradient-to-b from-blue-800 to-purple-900 flex items-center justify-center">
       <span className="text-white font-bold text-lg">
@@ -50,17 +48,15 @@ export function CharacterCard({ character, onClick, disabled }: CharacterCardPro
     </div>
   );
   
-  // Validate image URL (supports both direct URLs and Cloudinary URLs)
   const isValidImageUrl = (url?: string): boolean => {
     return !!url && (
       url.startsWith('http://') || 
       url.startsWith('https://') ||
       url.startsWith('/api/avatar') ||
-      url.startsWith('data:') // Also accept data URIs for backward compatibility
+      url.startsWith('data:') // also accept data URIs for backward compatibility
     );
   };
   
-  // Get actual image URL to use
   const imageUrl = isValidImageUrl(character.imageUrl) ? character.imageUrl : null;
   
   return (
@@ -85,14 +81,13 @@ export function CharacterCard({ character, onClick, disabled }: CharacterCardPro
               fill
               className="object-cover"
               onError={(e) => {
-                console.error(`CharacterCard: Failed to load image for character "${character.name}". URL: ${imageUrl}`, e);
-                setImgError(true); // Trigger fallback UI
-                setIsLoading(false); // Ensure loading state is updated
+                setImgError(true); 
+                setIsLoading(false);
               }}
-              onLoad={() => setIsLoading(false)} // Update loading state when image loads successfully
-              unoptimized={true} // Needed for external URLs like Cloudinary
+              onLoad={() => setIsLoading(false)} 
+              unoptimized={true} 
             />
-            {imgError && <EmptyImagePlaceholder />} // Show fallback UI if image fails
+            {imgError && <EmptyImagePlaceholder />} 
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-200/50">
                 <span className="text-sm text-muted-foreground">Loading...</span>
