@@ -81,7 +81,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
         {Array(3).fill(0).map((_, i) => (
           <div key={i} className={cn(
             "flex items-center gap-2 rounded-md p-2 h-9",
-            isCollapsed ? "justify-center px-0" : "px-2",
+            isCollapsed ? "justify-center items-center px-2" : "px-2",
             isMobile && "py-3"
           )}>
             <Skeleton className={cn("h-5 w-5 rounded-full", isMobile && "h-7 w-7")} />
@@ -110,13 +110,12 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
   return (
     <div className={cn(
       "py-2",
-      isCollapsed ? "px-1" : "px-3"
+      isCollapsed ? "px-3" : "px-3"
     )}>
       <TooltipProvider delayDuration={300}>
         {conversations.slice(0, 6).map((conversation) => {
           const isActive = pathname === `/chat/${conversation.id}`
           
-          // Use the imageUrl directly
           const imageUrl = conversation.character.imageUrl || 
             `https://robohash.org/${encodeURIComponent(conversation.character.name)}?size=40x40&set=set4`;
           
@@ -140,7 +139,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
               </Avatar>
               {!isCollapsed && (
                 <span className="truncate text-sm">
-                  {conversation.character.name} {/* Display only the character's name */}
+                  {conversation.character.name} 
                 </span>
               )}
             </Link>

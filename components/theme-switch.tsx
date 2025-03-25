@@ -9,7 +9,7 @@ export default function ThemeSwitch() {
 
   return (
     <div
-      className="fixed w-[4rem] h-[2rem] bg-gray-300 dark:bg-neutral-400 rounded-full flex items-center p-1 cursor-pointer shadow-2xl transition-all"
+      className="fixed w-[4rem] h-[2rem] bg-gray-300 dark:bg-neutral-600 rounded-full flex items-center p-1 cursor-pointer shadow-2xl transition-all"
       onClick={toggleTheme}
     >
       <div

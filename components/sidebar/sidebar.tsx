@@ -169,7 +169,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       variant="default"
                       className={cn(
                         "justify-start w-fit gap-3 text-black font-medium rounded-full p-4 h-10 bg-yellow-300",
-                        isCollapsed && "justify-center p-2 h-9 w-9"
+                        isCollapsed && "justify-center items-center p-2 h-9 w-9 bg-yellow-300"
                       )}
                     >
                       <PlusCircle className="h-4 w-4" />
@@ -188,7 +188,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                         variant="secondary"
                         className={cn(
                           "w-full justify-start gap-3 font-medium rounded-full p-4 h-10 mt-2 border cursor-pointer",
-                          isCollapsed && "justify-center p-2 h-9 w-9"
+                          isCollapsed && "justify-center items-center p-2 h-9 w-9"
                         )}
                       >
                         <FaFire className="h-4 w-4" />
@@ -200,7 +200,6 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                     <TooltipContent side="right">Discover</TooltipContent>
                   )}
                 </Tooltip>
-
               </div>
             </TooltipProvider>
           </div>
@@ -247,7 +246,10 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
               onClick={() => userButtonRef.current?.querySelector('button')?.click()}
               role="button"
             >
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className={cn(
+                "flex items-center gap-2 mt-0.5",
+                isCollapsed && "justify-center"
+              )}>
                 <div ref={userButtonRef}>
                   <UserButton afterSignOutUrl="/" />
                 </div>
