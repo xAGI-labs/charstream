@@ -118,37 +118,50 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
-    }
-    
     const url = new URL(req.url)
-    const onlyMine = url.searchParams.get("onlyMine") === "true"
+    const isPublic = url.searchParams.get("public") === "true"
+    const search = url.searchParams.get("search") || ""
+    const page = parseInt(url.searchParams.get("page") || "1")
+    const limit = parseInt(url.searchParams.get("limit") || "20")
+    const skip = (page - 1) * limit
+
+    // Build where clause
+    const where: any = {}
     
-    let where = {}
-    
-    if (onlyMine) {
-      where = { creatorId: userId }
-    } else {
-      where = {
-        OR: [
-          { creatorId: userId },
-          { isPublic: true }
-        ]
-      }
+    // Only return public characters unless specified otherwise
+    if (isPublic) {
+      where.isPublic = true
     }
     
-    // Get characters
-    const characters = await prisma.character.findMany({
-      where,
-      orderBy: {
-        createdAt: "desc"
-      }
-    })
+    // Add search filter if provided
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    const [characters, total] = await Promise.all([
+      prisma.character.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          imageUrl: true,
+          isPublic: true,
+          createdAt: true,
+          updatedAt: true,
+          creatorId: true
+        }
+      }),
+      prisma.character.count({ where })
+    ])
     
-    return NextResponse.json(characters)
+    return NextResponse.json({ characters, total })
   } catch (error) {
     console.error("[CHARACTERS_GET]", error)
     return new NextResponse("Internal error", { status: 500 })

@@ -167,7 +167,7 @@ export default function ChatPage() {
     : (conversation?.characterId 
         ? {
             id: conversation.characterId,
-            name: "AI Assistant", // Placeholder name while character loads
+            name: "AI Assistant", 
             description: "No description available.",
             imageUrl: undefined
           } 
@@ -175,27 +175,6 @@ export default function ChatPage() {
   
   return (
     <div className="flex h-screen overflow-hidden bg-muted/10">
-      {/* Sidebar - Completely hide on mobile */}
-      {!isMobile && (
-        <div
-          className="h-full min-h-screen flex-shrink-0 transition-all duration-300"
-          style={{ width: sidebarCollapsed ? '68px' : '240px' }}
-        >
-          <Sidebar setIsOpen={setIsOpen} onCollapsedChange={setSidebarCollapsed} />
-        </div>
-      )}
-
-      {/* Mobile Navigation - explicitly render on mobile */}
-      {isMobile && (
-        <MobileNavigation
-          isSignedIn={!!userId}
-          setSignupOpen={setIsOpen}
-          setCreateDialogOpen={() => {}}
-          isCreateDialogOpen={false}
-          displayName=""
-        />
-      )}
-
       {/* Main Chat Area */}
       <div className="flex flex-col flex-1 overflow-hidden relative">
         {/* Chat Header - pass loading as boolean */}

@@ -43,7 +43,6 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar setIsOpen={setIsOpen} />
       <div className="flex-1 overflow-auto">
         {!isMobile && <Header />}
         <main className="container max-w-7xl mx-auto px-4 pb-16">

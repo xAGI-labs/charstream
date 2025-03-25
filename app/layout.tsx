@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import ThemeContextProvider from "@/context/theme-context";
 import ThemeSwitch from "@/components/theme-switch";
 import { PostHogProvider } from "@/components/providers/posthog-provider";
+import { RootLayoutContent } from "@/components/layout/root-layout-content";
 
 export const metadata: Metadata = {
   title: "charstream.xyz | Personalized AI Characters for every moment of your day",
@@ -40,7 +41,10 @@ export default function RootLayout({
                 enableSystem={false}
                 storageKey="chatstream-theme"
               >
-                {children}
+                <RootLayoutContent>
+                  {children}
+                </RootLayoutContent>
+                
                 <Toaster
                   position="top-center"
                   toastOptions={{

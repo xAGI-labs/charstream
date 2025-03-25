@@ -13,7 +13,9 @@ import {
   MessageCircle,
   Star,
   Settings,
-  LogOut
+  LogOut,
+  PlusIcon,
+  Plus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,7 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import  ThemeSwitch  from "@/components/theme-switch"
-import { FaCcDiscover, FaFire } from "react-icons/fa"
+import { FaCcDiscover, FaFire, FaRegCompass } from "react-icons/fa"
 
 interface SidebarProps {
   setIsOpen?: (open: boolean) => void;
@@ -169,12 +171,12 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       variant="default"
                       className={cn(
                         "justify-start w-fit gap-3 text-black font-extralight rounded-full bg-yellow-300 hover:bg-yellow-400 cursor-pointer",
-                        isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-14"
+                        isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-12"
                       )}
                     >
-                      <PlusCircle className={cn(
+                      <Plus className={cn(
                         "transition-all",
-                        isCollapsed ? "h-5 w-5" : "h-8 w-8"
+                        isCollapsed ? "h-5 w-5" : "h-10 w-10"
                       )} />
                       {!isCollapsed && <span className="text-lg font-semibold">Create</span>}
                     </Button>
@@ -190,11 +192,11 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       <Button
                         variant="secondary"
                         className={cn(
-                          "w-full justify-start gap-3 font-medium rounded-full mt-2 border cursor-pointer",
+                          "w-full justify-start gap-3 font-medium rounded-full mt-2 cursor-pointer",
                           isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-10"
                         )}
                       >
-                        <FaFire className="h-4 w-4" />
+                        <FaRegCompass className="h-4 w-4" />
                         {!isCollapsed && <span>Discover</span>}
                       </Button>
                     </Link>
