@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle, ForwardedRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Mic, Square, Loader2, Volume2, PhoneOff, Repeat } from "lucide-react"
+import { Mic, Square, Loader2, Volume2, PhoneOff, Repeat, MicOff } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { FullscreenVoiceCall } from "./fullscreen-voice-call"
 
 interface VoiceChatProps {
   characterId: string;
@@ -24,11 +25,15 @@ interface VoiceChatProps {
   ) => void;
   onCallActiveChange?: (active: boolean) => void;
   isUnhinged?: boolean;
+  characterName?: string;
+  characterAvatarUrl?: string | null;
 }
 
 interface VoiceChatMethods {
   interruptAI: () => void;
   endCall: () => void;
+  toggleMute: () => void;
+  toggleAutoListen: () => void; // Add this method
 }
 
 export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({ 
@@ -38,7 +43,9 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   isWaiting,
   onVoiceStateChange,
   onCallActiveChange,
-  isUnhinged = false
+  isUnhinged = false,
+  characterName = "AI Assistant",
+  characterAvatarUrl
 }: VoiceChatProps, ref: ForwardedRef<VoiceChatMethods>) => {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -46,36 +53,54 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   const [recordingTime, setRecordingTime] = useState(0)
   const [lastUserMessage, setLastUserMessage] = useState("")
   const [lastAIMessage, setLastAIMessage] = useState("")
-  const [continuousMode, setContinuousMode] = useState(false)
-  const [callActive, setCallActive] = useState(false)
+  const [continuousMode, setContinuousMode] = useState(true) // Default to continuous mode
+  const [callActive, setCallActive] = useState(true) // Default to active call
   const [liveUserTranscript, setLiveUserTranscript] = useState<string>("");
   const [liveAITranscript, setLiveAITranscript] = useState<string>("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [earlyTranscript, setEarlyTranscript] = useState<string>("");
+  const [isMuted, setIsMuted] = useState(false);
+  const [autoListen, setAutoListen] = useState(false) // Default to not auto-listen
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null)
   const { userId } = useAuth()
+  
+  // Automatically start call when component mounts, but don't auto-record
+  useEffect(() => {
+    console.log("Voice mode activated - starting call automatically");
+    if (onCallActiveChange) onCallActiveChange(true);
+    
+    // Small delay before starting to record to allow UI to render
+    const timer = setTimeout(() => {
+      if (!isRecording && !isProcessing && !isResponding) {
+        startRecording();
+      }
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Debug information
   useEffect(() => {
     console.log("VoiceChat props:", { 
       characterId, 
       disabled, 
+      callActive,
       isWaiting, 
       continuousMode, 
-      callActive,
-      isUnhinged // Log the isUnhinged state
+      isUnhinged,
+      characterName
     })
-  }, [characterId, disabled, isWaiting, continuousMode, callActive, isUnhinged])
-
+  }, [characterId, disabled, isWaiting, continuousMode, callActive, isUnhinged, characterName])
+  
   // Update the parent component with state changes
   useEffect(() => {
-    if (onVoiceStateChange) {
+    if (onVoiceStateChange) { 
       onVoiceStateChange(
-        isRecording, 
+        isRecording,
         isProcessing, 
         isResponding,
         recordingTime,
@@ -84,10 +109,10 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       );
     }
   }, [isRecording, isProcessing, isResponding, recordingTime, lastUserMessage, lastAIMessage, onVoiceStateChange]);
-
+  
   // After responding finishes in continuous mode, start recording again
   useEffect(() => {
-    if (continuousMode && callActive && !isResponding && !isRecording && !isProcessing) {
+    if (autoListen && continuousMode && callActive && !isResponding && !isRecording && !isProcessing && !isMuted) {
       const timer = setTimeout(() => {
         if (callActive) {
           startRecording();
@@ -96,9 +121,29 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       
       return () => clearTimeout(timer);
     }
-  }, [isResponding, isRecording, isProcessing, continuousMode, callActive]);
-
+  }, [isResponding, isRecording, isProcessing, continuousMode, callActive, isMuted, autoListen]);
+  
   const startRecording = async () => {
+    // Additional logging to help debug
+    console.log("startRecording called, current states:", {
+      isRecording,
+      isProcessing,
+      isResponding,
+      isMuted
+    });
+    
+    // Don't start recording if already recording or if in another state that prevents recording
+    if (isRecording || isProcessing || isResponding) {
+      console.log("Cannot start recording - already in another state");
+      return;
+    }
+    
+    // Don't start recording if muted
+    if (isMuted) {
+      console.log("Microphone is muted, not starting recording");
+      return;
+    }
+    
     try {
       console.log("Starting voice recording...")
       
@@ -118,11 +163,27 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       
       console.log("Microphone access granted")
       
-      // Create media recorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm' // Most compatible format for OpenAI
-      })
+      // Create media recorder with error handling
+      let mimeType = 'audio/webm';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        console.warn("audio/webm not supported, trying audio/ogg");
+        mimeType = 'audio/ogg';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          console.warn("audio/ogg not supported, trying default");
+          mimeType = '';
+        }
+      }
+      
+      console.log(`Using mime type: ${mimeType || 'browser default'}`);
+      
+      const mediaRecorder = mimeType ? 
+        new MediaRecorder(stream, { mimeType }) : 
+        new MediaRecorder(stream);
+        
       mediaRecorderRef.current = mediaRecorder
+      
+      // Store the active stream for later cleanup
+      const streamRef = stream;
       
       // Set up event handlers
       mediaRecorder.ondataavailable = (event) => {
@@ -133,82 +194,146 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       }
       
       mediaRecorder.onstop = () => {
-        console.log("Recording stopped")
-        console.log("Number of audio chunks:", audioChunksRef.current.length)
+        console.log("Recording stopped, processing audio chunks");
         
         if (audioChunksRef.current.length === 0) {
+          console.error("No audio chunks recorded");
           toast.error("No audio was recorded", {
             description: "Please try again and speak clearly"
-          })
-          return
+          });
+          setIsProcessing(false);
+          return;
         }
         
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        console.log("Audio blob created, size:", audioBlob.size)
+        console.log(`Captured ${audioChunksRef.current.length} audio chunks`);
+        
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
+        console.log("Audio blob created, size:", audioBlob.size);
         
         // Stop all tracks in the stream
-        stream.getTracks().forEach(track => track.stop())
+        streamRef.getTracks().forEach(track => track.stop());
         
-        // Process the audio
-        processAudio(audioBlob)
-      }
+        // Process the audio - this will send it to the server
+        processAudio(audioBlob);
+      };
       
-      // Start recording
-      mediaRecorder.start(100) // Collect data every 100ms
-      setIsRecording(true)
+      // Register error handler
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        toast.error("Recording error", {
+          description: "There was a problem with the microphone"
+        });
+      };
+      
+      // Start recording with explicit timeout to ensure it completes
+      console.log("Starting MediaRecorder...");
+      mediaRecorder.start(100); // Collect data every 100ms
       
       // Start recording timer
+      setIsRecording(true);
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1)
-      }, 1000)
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
       
-      console.log("Recording started successfully")
+      console.log("Recording started successfully");
       
     } catch (error: unknown) {
-      console.error("Error starting recording:", error)
-      
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      console.error("Error starting recording:", error);
+      const errorMessage = error instanceof Error  
+        ? error.message
         : "Unknown error";
       
       toast.error("Could not access microphone", {
         description: errorMessage
-      })
+      });
     }
   }
   
   const stopRecording = () => {
-    console.log("Stopping recording...")
+    // Log event with timestamp for debugging
+    console.log(`⏱️ STOP RECORDING CALLED AT ${new Date().toISOString()}`);
     
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
+    try {
+      // Always force stop the recording state first
+      setIsRecording(false);
+      setIsProcessing(true);
       
-      // Clear the timer
+      // Clear any active timers
       if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
       
-      // Show transcribing state immediately
-      setIsTranscribing(true);
-    } else {
-      console.warn("No active recording to stop")
+      // Process the recorder if it exists
+      if (mediaRecorderRef.current) {
+        // Track if we need to manually process chunks
+        let manualProcessingNeeded = true;
+        
+        try {
+          // Try to get any final data
+          if (mediaRecorderRef.current.state === 'recording') {
+            try {
+              mediaRecorderRef.current.requestData();
+              console.log("Requested final data chunk");
+            } catch (e) {
+              console.error("Error requesting final data:", e);
+            }
+            
+            try {
+              mediaRecorderRef.current.stop();
+              console.log("✅ MediaRecorder successfully stopped");
+              // If we got here, the onstop event should trigger, but we'll still have a backup
+            } catch (e) {
+              console.error("Failed to stop recorder:", e);
+            }
+          } else {
+            console.log("MediaRecorder not in recording state:", mediaRecorderRef.current.state);
+          }
+        } catch (e) {
+          console.error("Error handling recorder:", e);
+        }
+        
+        // ALWAYS process the chunks after a delay, regardless of recorder state
+        console.log(`Audio chunks collected: ${audioChunksRef.current.length}`);
+        
+        // Create and process the audio blob
+        setTimeout(() => {
+          console.log("Processing audio chunks after timeout");
+          if (audioChunksRef.current.length > 0) {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            console.log(`Created audio blob: ${audioBlob.size} bytes`);
+            processAudio(audioBlob);
+          } else {
+            console.error("No audio chunks to process");
+            setIsProcessing(false);
+            toast.error("No audio was recorded");
+          }
+        }, 500);
+      } else {
+        console.warn("No media recorder found");
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error("Error in stopRecording:", error);
+      setIsProcessing(false);
+      toast.error("Error stopping recording");
     }
-  }
+  };
   
   const processAudio = async (audioBlob: Blob) => {
     // Log values for debugging
-    console.log("Processing audio with:", {
-      userId: userId,
-      characterId: characterId,
-      blobSize: audioBlob.size
+    console.log("processAudio called with blob:", {
+      size: audioBlob.size,
+      type: audioBlob.type,
+      userId,
+      characterId
     });
     
     if (!userId) {
       toast.error("You need to be signed in", {
         description: "Please sign in to use voice chat"
       });
+      setIsProcessing(false);
       return;
     }
     
@@ -217,117 +342,144 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       toast.error("Character information missing", {
         description: "Please refresh the page or try a different character"
       });
+      setIsProcessing(false);
+      return;
+    }
+    
+    if (audioBlob.size === 0) {
+      console.error("Empty audio blob");
+      toast.error("No audio recorded", {
+        description: "Please try again and speak clearly"
+      });
+      setIsProcessing(false);
       return;
     }
     
     try {
-      console.log("Processing audio blob, size:", audioBlob.size)
-      setIsProcessing(true)
-      
-      // Do early transcription to show user input immediately
-      try {
-        setIsTranscribing(true);
-        const { transcribeAudio } = await import('@/lib/openai');
-        const transcript = await transcribeAudio(audioBlob);
-        
-        if (transcript) {
-          console.log("Early transcript:", transcript);
-          setEarlyTranscript(transcript);
-          setLastUserMessage(transcript);
-          setLiveUserTranscript(transcript);
-          setIsTranscribing(false);
-        }
-      } catch (transcriptError) {
-        console.error("Error with early transcription:", transcriptError);
-        setIsTranscribing(false);
-      }
+      console.log("Processing audio blob, size:", audioBlob.size);
+      setIsProcessing(true);
       
       // Create form data to send to API
-      const formData = new FormData()
-      formData.append('audio_file', audioBlob, 'recording.webm')
-      formData.append('character_id', characterId)
-      formData.append('is_unhinged', isUnhinged.toString())
+      const formData = new FormData();
+      formData.append('audio_file', audioBlob, 'recording.webm');
+      formData.append('character_id', characterId);
+      formData.append('is_unhinged', isUnhinged.toString());
       
-      // Add debug log to confirm the unhinged state being sent
-      console.log(`Sending audio to API for processing (characterId: ${characterId}, unhinged: ${isUnhinged})...`)
+      // Log that we're about to send the request
+      console.log(`Sending request to /api/voice/process with form data:`, {
+        'audio_file': `Blob of ${audioBlob.size} bytes`,
+        'character_id': characterId,
+        'is_unhinged': isUnhinged
+      });
       
-      // Call our API endpoint
-      const response = await fetch('/api/voice/process', {
-        method: 'POST',
-        body: formData
-      })
+      // Call our API endpoint with a timeout to avoid hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("API Error Response:", errorText)
-        throw new Error(errorText || response.statusText)
-      }
-      
-      const data = await response.json()
-      console.log("Voice API response:", data)
-      
-      // Update last messages for display UI only if not already set by early transcription
-      if (data.user_text && !lastUserMessage) {
-        setLastUserMessage(data.user_text)
-        setLiveUserTranscript(data.user_text);
-      }
-      
-      // Update AI message as soon as it's available
-      if (data.ai_text) {
-        let cleanedResponse = data.ai_text
-        // Remove any "*As character*:" prefix if present
-        if (cleanedResponse.includes('*As ') && cleanedResponse.includes('*:')) {
-          cleanedResponse = cleanedResponse.replace(/\*As [^*]+\*:\s*/, '')
+      try {
+        const response = await fetch('/api/voice/process', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`API Response status: ${response.status}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API Error Response:", errorText);
+          throw new Error(errorText || response.statusText);
         }
-        setLastAIMessage(cleanedResponse)
-        setLiveAITranscript(cleanedResponse);
         
-        // Refresh messages to show the AI response in the chat history immediately
-        await onMessageSent("__REFRESH_MESSAGES__")
+        const data = await response.json();
+        console.log("Voice API response:", data);
         
-        // Processing is complete, even though we're still waiting for audio
-        setIsProcessing(false)
-      }
-      
-      // Play audio response if available
-      if (data.audio_data) {
-        console.log("Playing audio response")
-        setIsResponding(true)
+        // Update last messages for display UI only
+        if (data.user_text) {
+          setLastUserMessage(data.user_text);
+          setLiveUserTranscript(data.user_text);
+        }
         
-        const responseAudio = new Audio(data.audio_data)
-        audioPlayerRef.current = responseAudio
-        
-        // When audio ends, reset responding state and trigger refresh
-        responseAudio.addEventListener('ended', async () => {
-          setIsResponding(false)
-          audioPlayerRef.current = null
-          
-          // After audio finishes playing, ensure messages are refreshed
-          try {
-            console.log("Voice response ended, refreshing messages")
-            await onMessageSent("__REFRESH_MESSAGES__")
-          } catch (refreshError) {
-            console.error("Error refreshing messages after voice response:", refreshError)
+        // Update AI message as soon as it's available
+        if (data.ai_text) {
+          let cleanedResponse = data.ai_text;
+          // Remove any "*As character*:" prefix if present
+          if (cleanedResponse.includes('*As ') && cleanedResponse.includes('*:')) {
+            cleanedResponse = cleanedResponse.replace(/\*As [^*]+\*:\s*/, '');
           }
-        })
+          setLastAIMessage(cleanedResponse);
+          setLiveAITranscript(cleanedResponse);
+          
+          // Refresh messages to show the AI response in the chat history immediately
+          await onMessageSent("__REFRESH_MESSAGES__");
+          
+          // Processing is complete, even though we're still waiting for audio
+          setIsProcessing(false);
+        }
         
-        responseAudio.play()
-      } else {
-        console.error("No audio data in response")
-        setIsProcessing(false)
-        throw new Error("No audio response received")
+        // Play audio response if available
+        if (data.audio_data) {
+          console.log("Playing audio response");
+          setIsResponding(true);
+          
+          const responseAudio = new Audio(data.audio_data);
+          audioPlayerRef.current = responseAudio;
+          
+          // When audio ends, reset responding state and trigger refresh
+          responseAudio.addEventListener('ended', async () => {
+            setIsResponding(false);
+            audioPlayerRef.current = null;
+            
+            // After audio finishes playing, ensure messages are refreshed
+            try {
+              console.log("Voice response ended, refreshing messages");
+              await onMessageSent("__REFRESH_MESSAGES__");
+            } catch (refreshError) {
+              console.error("Error refreshing messages after voice response:", refreshError);
+            }
+          });
+          
+          responseAudio.play();
+          
+          // Also initiate an immediate refresh to ensure the database message is captured
+          if (data.conversation_id) {
+            try {
+              // Slight delay to ensure database writes are completed
+              setTimeout(async () => {
+                await onMessageSent("__REFRESH_MESSAGES__");
+              }, 500);
+            } catch (error) {
+              console.error("Error triggering message refresh:", error);
+            }
+          }
+        } else {
+          console.error("No audio data in response");
+          setIsProcessing(false);
+          throw new Error("No audio response received");
+        }
+        
+      } catch (fetchError: unknown) {
+        console.error("Fetch error:", fetchError);
+        if (fetchError && 
+            typeof fetchError === 'object' && 
+            'name' in fetchError && 
+            fetchError.name === 'AbortError') {
+          throw new Error("Request timed out - server took too long to respond");
+        }
+        throw fetchError;
       }
-      
     } catch (error: unknown) {
-      console.error("Error processing audio:", error)
+      console.error("Error processing audio:", error);
       const errorMessage = error instanceof Error 
         ? error.message 
-        : "Please try again"
+        : "Please try again";
       toast.error("Error processing voice", {
         description: errorMessage
-      })
-      setIsProcessing(false)
-      setIsResponding(false)
+      });
+      setIsProcessing(false);
+      setIsResponding(false);
     }
   }
   
@@ -338,22 +490,50 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       audioPlayerRef.current = null;
       setIsResponding(false);
       
-      // Small delay before starting to record
+      // Small delay before starting to record again
       setTimeout(() => {
-        if (callActive) {
+        if (callActive && !isMuted && autoListen) {
           startRecording();
         }
       }, 300);
     }
   }
   
-  const startCall = () => {
-    setCallActive(true);
-    if (onCallActiveChange) onCallActiveChange(true);
-    startRecording();
+  // Add toggle auto listen function
+  const toggleAutoListen = () => {
+    console.log(`Toggling auto-listen from ${autoListen} to ${!autoListen}`);
+    setAutoListen(!autoListen);
+    
+    // Notify user of the change
+    toast.info(autoListen ? "Auto-listening disabled" : "Auto-listening enabled", {
+      description: autoListen 
+        ? "You need to click the mic button to speak" 
+        : "Microphone will activate automatically after AI responds"
+    });
+  };
+  
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    
+    if (!isMuted) {
+      // Currently not muted, going to mute
+      if (isRecording) {
+        // Stop recording if active
+        stopRecording();
+      }
+      toast.info("Microphone muted");
+    } else {
+      // Currently muted, going to unmute
+      toast.info("Microphone unmuted");
+      if (callActive && !isProcessing && !isResponding && autoListen) {
+        // Start recording if call is active and we're not busy
+        startRecording();
+      }
+    }
   }
   
   const endCall = () => {
+    console.log("Ending call...");
     setCallActive(false);
     if (onCallActiveChange) onCallActiveChange(false);
     
@@ -383,18 +563,20 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
   // Expose methods via useImperativeHandle
   useImperativeHandle(ref, () => ({
     interruptAI,
-    endCall
+    endCall,
+    toggleMute,
+    toggleAutoListen
   }));
   
   // Clean up on component unmount or when mode changes
   useEffect(() => {
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current)
+        clearInterval(timerRef.current);
       }
       
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop()
+        mediaRecorderRef.current.stop();
       }
       
       if (audioPlayerRef.current) {
@@ -403,129 +585,43 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
       }
       
       // Reset states
-      setIsRecording(false)
-      setIsProcessing(false)
-      setIsResponding(false)
-      setCallActive(false)
+      setIsRecording(false);
+      setIsProcessing(false);
+      setIsResponding(false);
+      setCallActive(false);
     }
-  }, [])
+  }, []);
   
   // Format recording time as mm:ss
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
   
+  // When in voice mode, always show the fullscreen interface
   return (
-    <div className="flex flex-col items-center justify-center w-full">
-      <div className="flex items-center gap-2 mb-4">
-        <Switch
-          id="continuous-mode"
-          checked={continuousMode}
-          onCheckedChange={setContinuousMode}
-          disabled={isRecording || isProcessing || isResponding}
-        />
-        <Label htmlFor="continuous-mode" className="text-sm">
-          Continuous conversation
-        </Label>
-      </div>
-      
-      {!callActive ? (
-        // Start call button
-        <Button
-          type="button"
-          onClick={startCall}
-          disabled={disabled || isWaiting}
-          className={cn(
-            "rounded-full h-14 w-14 bg-green-500 hover:bg-green-600 text-white",
-            (disabled || isWaiting) && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <Mic className="h-6 w-6" />
-        </Button>
-      ) : (
-        // Active call UI
-        <div className="flex flex-col items-center">
-          {isRecording ? (
-            // Recording state
-            <div className="flex flex-col items-center">
-              <div className="text-sm font-medium mb-2 text-red-500">
-                {formatTime(recordingTime)}
-              </div>
-              <Button
-                type="button"
-                onClick={stopRecording}
-                className="rounded-full h-14 w-14 bg-red-500 hover:bg-red-600 text-white"
-              >
-                <Square className="h-6 w-6" />
-              </Button>
-            </div>
-          ) : isTranscribing ? (
-            // Transcribing state (new)
-            <Button
-              type="button"
-              disabled={true}
-              className="rounded-full h-14 w-14 bg-yellow-500 opacity-70 cursor-not-allowed"
-            >
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </Button>
-          ) : isProcessing ? (
-            // Processing state
-            <Button
-              type="button"
-              disabled={true}
-              className="rounded-full h-14 w-14 bg-primary opacity-70 cursor-not-allowed"
-            >
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </Button>
-          ) : isResponding ? (
-            // AI speaking state - interrupt option
-            <Button
-              type="button"
-              onClick={interruptAI}
-              className="rounded-full h-14 w-14 bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              <Volume2 className="h-6 w-6" />
-            </Button>
-          ) : (
-            // Default active call state - start recording again
-            <Button
-              type="button"
-              onClick={startRecording}
-              className="rounded-full h-14 w-14 bg-green-500 hover:bg-green-600 text-white"
-            >
-              <Repeat className="h-6 w-6" />
-            </Button>
-          )}
-          
-          {/* End call button */}
-          <Button
-            type="button"
-            onClick={endCall}
-            className="rounded-full h-10 w-10 bg-red-500 hover:bg-red-600 text-white mt-3"
-            title="End call"
-          >
-            <PhoneOff className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-      
-      <div className="mt-3 text-sm text-muted-foreground text-center">
-        {!callActive ? (
-          "Click to start voice call"
-        ) : isRecording ? (
-          "Recording... Click to stop"
-        ) : isTranscribing ? (
-          "Transcribing your speech..."
-        ) : isProcessing ? (
-          "Processing your message..."
-        ) : isResponding ? (
-          "AI is speaking... Click to interrupt"
-        ) : (
-          "Ready for your next message"
-        )}
-      </div>
+    <div className="flex-1 flex items-center justify-center w-full h-screen">
+      {/* Always show the fullscreen call UI in voice mode */}
+      <FullscreenVoiceCall
+        isActive={true}
+        characterName={characterName}
+        characterAvatarUrl={characterAvatarUrl}
+        isRecording={isRecording}
+        isProcessing={isProcessing}
+        isResponding={isResponding}
+        isMuted={isMuted}
+        recordingTime={recordingTime}
+        userMessage={liveUserTranscript}
+        aiMessage={liveAITranscript}
+        onMuteToggle={toggleMute}
+        onEndCall={endCall}
+        onInterrupt={interruptAI}
+        onStartRecording={startRecording}
+        onStopRecording={stopRecording}
+        autoListen={autoListen}
+        onAutoListenToggle={toggleAutoListen}
+      />
     </div>
   );
 });

@@ -3,17 +3,16 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
-import { Sidebar } from "@/components/sidebar/sidebar"
 import { ChatHeader } from "@/components/chat/chat-header"
 import { ChatMessages } from "@/components/chat/chat-messages"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ChatModeSwitcher, ChatMode } from "@/components/chat/chat-mode-switcher"
-import { CharacterInfo } from "@/components/chat/character-info" // Import the new component
+import { CharacterInfo } from "@/components/chat/character-info" 
+import { VoiceChat } from "@/components/chat/voice-chat"
 import { useConversation } from "@/hooks/use-conversation"
 import { useSignupDialog } from "@/hooks/use-signup-dialog"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { MobileNavigation } from "@/components/sidebar/mobile-navigation"
 
 export default function ChatPage() {
   const { chatId } = useParams()
@@ -194,8 +193,8 @@ export default function ChatPage() {
           </div>
         </div>
         
-        {/* Messages Area with gradient background for visual interest */}
-        <div className="flex-1 overflow-hidden relative bg-gradient-to-b from-background to-background/95">
+        {/* Messages Area with gradient background - hide when in voice mode */}
+        <div className={`flex-1 overflow-hidden relative bg-gradient-to-b from-background to-background/95 ${chatMode === 'voice' ? 'hidden' : ''}`}>
           <div className="absolute inset-0 overflow-y-auto">
             <ChatMessages 
               messages={messages} 
@@ -207,36 +206,67 @@ export default function ChatPage() {
           </div>
         </div>
         
-        {/* Chat Input */}
-        <ChatInput 
-          onSend={async (content, isUserMessage) => {
-            // Special case for refreshing messages after voice chat
-            if (content === "__REFRESH_MESSAGES__") {
-              console.log("Received refresh message request from voice chat")
-              await refetchMessages()
-              setIsWaiting(false)
-              return
-            }
-            
-            // Set waiting state manually
-            setIsWaiting(true)
-            
-            // Regular message handling
-            if (isUserMessage === true || isUserMessage === undefined) {
-              // For user messages, pass the unhinged state through our modified sendMessage
-              await sendMessage(content, true)
-            } else {
-              // For AI messages
-              await sendMessage(content, false)
-            }
-          }}
-          disabled={loading === true} // Ensure boolean type
-          isWaiting={!!isWaiting} // Ensure boolean type
-          setIsWaiting={setIsWaiting}
-          mode={chatMode}
-          characterId={conversation?.characterId} // Make sure this is passed correctly
-          isUnhinged={isUnhinged} // Pass the unhinged state to ChatInput
-        />
+        {/* Voice mode area - takes up full space when in voice mode */}
+        {chatMode === 'voice' && (
+          <div className="flex-1 overflow-hidden relative">
+            <VoiceChat 
+              characterId={conversation?.characterId || ""}
+              onMessageSent={async (content, isUserMessage) => {
+                // Special case for refreshing messages after voice chat
+                if (content === "__REFRESH_MESSAGES__") {
+                  console.log("Refreshing messages from voice chat")
+                  await refetchMessages()
+                  return
+                }
+                
+                // Regular message handling
+                if (isUserMessage === true || isUserMessage === undefined) {
+                  await sendMessage(content, true)
+                } else {
+                  await sendMessage(content, false)
+                }
+              }}
+              disabled={loading === true}
+              isWaiting={!!isWaiting}
+              isUnhinged={isUnhinged}
+              characterName={characterData?.name || "AI Assistant"}
+              characterAvatarUrl={characterData?.imageUrl}
+            />
+          </div>
+        )}
+        
+        {/* Chat Input - only show in text mode */}
+        {chatMode === 'text' && (
+          <ChatInput 
+            onSend={async (content, isUserMessage) => {
+              // Special case for refreshing messages after voice chat
+              if (content === "__REFRESH_MESSAGES__") {
+                console.log("Received refresh message request from voice chat")
+                await refetchMessages()
+                setIsWaiting(false)
+                return
+              }
+              
+              // Set waiting state manually
+              setIsWaiting(true)
+              
+              // Regular message handling
+              if (isUserMessage === true || isUserMessage === undefined) {
+                // For user messages, pass the unhinged state through our modified sendMessage
+                await sendMessage(content, true)
+              } else {
+                // For AI messages
+                await sendMessage(content, false)
+              }
+            }}
+            disabled={loading === true} // Ensure boolean type
+            isWaiting={!!isWaiting} // Ensure boolean type
+            setIsWaiting={setIsWaiting}
+            mode={chatMode}
+            characterId={conversation?.characterId} // Make sure this is passed correctly
+            isUnhinged={isUnhinged} // Pass the unhinged state to ChatInput
+          />
+        )}
       </div>
     </div>
   )

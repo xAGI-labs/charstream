@@ -1,5 +1,5 @@
 export async function transcribeAudio(audioBlob: Blob): Promise<string | null> {
-  const apiKey = process.env.NEXT_PUBLIC_OPEN_AI_KEY || process.env.OPEN_AI_KEY;
+  const apiKey = process.env.OPEN_AI_KEY || process.env.OPEN_AI_KEY;
 
   if (!apiKey) {
     console.error("OpenAI API key is missing. Please set it in the environment variables.");
