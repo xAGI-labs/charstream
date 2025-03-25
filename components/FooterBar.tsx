@@ -93,20 +93,17 @@ export default function CharacterFooter() {
       </div>
 
       <div className="relative z-10 flex flex-wrap justify-center mt-24 space-x-4 md:space-x-6 text-sm">
-        <Link href="#" className="dark:text-gray-400 text-gray-600 hover:underline">
+        <Link href="/" className="dark:text-gray-400 text-gray-600 hover:underline">
           About
         </Link>
-        <Link href="#" className="dark:text-gray-400 text-gray-600 hover:underline">
+        <Link href="/discover" className="dark:text-gray-400 text-gray-600 hover:underline">
           Characters
         </Link>
-        <Link href="#" className="dark:text-gray-400 text-gray-600 hover:underline">
-          Careers
+        <Link href="pricing" className="dark:text-gray-400 text-gray-600 hover:underline">
+          Pricing
         </Link>
         <Link href="#" className="dark:text-gray-400 text-gray-600 hover:underline">
           Blog
-        </Link>
-        <Link href="#" className="dark:text-gray-400 text-gray-600 hover:underline">
-          Research
         </Link>
       </div>
 
