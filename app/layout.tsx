@@ -30,49 +30,29 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  const savedTheme = localStorage.getItem('theme');
-                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-                  if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                  }
-                  document.documentElement.setAttribute('data-theme', theme);
-                } catch (e) {
-                  console.error('Failed to initialize theme:', e);
-                }
-              })();
-            `,
-          }}
-        />
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+      >
         <ThemeContextProvider>
-        <PostHogProvider>
-          <ClerkProvider>
-            <RootLayoutContent>
-              {children}
-            </RootLayoutContent>
-            <ThemeSwitch />
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                style: {
-                  background: "#030303",
-                  color: "#fff",
-                  border: "1px solid #444",
-                },
-              }}
-            />
-          </ClerkProvider>
-        </PostHogProvider>
+          <PostHogProvider>
+            <ClerkProvider>
+              <RootLayoutContent>
+                {children}
+              </RootLayoutContent>
+              <ThemeSwitch />
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    background: "#030303",
+                    color: "#fff",
+                    border: "1px solid #444",
+                  },
+                }}
+              />
+            </ClerkProvider>
+          </PostHogProvider>
         </ThemeContextProvider>
       </body>
     </html>
