@@ -160,6 +160,11 @@ export function FullscreenVoiceCall({
   // Add test button to directly trigger processAudio in dev mode
   const isDevMode = process.env.NODE_ENV === 'development';
 
+  useEffect(() => {
+    console.log("FullscreenVoiceCall received characterAvatarUrl:", characterAvatarUrl);
+    console.log("Using avatar URL:", avatarUrl);
+  }, [characterAvatarUrl, avatarUrl]);
+
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center py-10 px-4 md:-mt-30">
       {/* Character Avatar and Info */}

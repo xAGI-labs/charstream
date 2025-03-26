@@ -112,6 +112,11 @@ export const VoiceChat = forwardRef<VoiceChatMethods, VoiceChatProps>(({
     }
   }, [isRecording, isProcessing, isResponding, recordingTime, lastUserMessage, lastAIMessage, onVoiceStateChange]);
   
+  // Add this useEffect to log the avatar URL whenever it changes
+  useEffect(() => {
+    console.log("VoiceChat received characterAvatarUrl:", characterAvatarUrl);
+  }, [characterAvatarUrl]);
+
   // After responding finishes in continuous mode, start recording again
   useEffect(() => {
     if (autoListen && continuousMode && callActive && !isResponding && !isRecording && !isProcessing && !isMuted) {
