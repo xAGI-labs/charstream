@@ -7,6 +7,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@clerk/nextjs"
+import { toast } from "sonner"
+import { useSignupDialog } from "@/hooks/use-signup-dialog"
 
 interface Character {
   id: string
@@ -24,12 +27,14 @@ interface CategoryGroup {
 export function CharacterCards() {
   const [categories, setCategories] = useState<CategoryGroup[]>([
     { title: "Try these", characters: [] },
-    { title: "Community Characters", characters: [] },
   ])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { theme } = useTheme()
+  const [clickingCharId, setClickingCharId] = useState<string | null>(null)
+  const { isSignedIn } = useAuth()
+  const { setIsOpen } = useSignupDialog()
 
   // Refs for scrolling
   const scrollContainerRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -77,13 +82,6 @@ export function CharacterCards() {
         console.error("Error fetching characters:", error)
         setError(error.message || "An unknown error occurred")
 
-        // Fallback data if API fails
-        setCategories([
-          {
-            title: "Try These",
-            characters: generateFallbackCharacters("community", 8),
-          },
-        ])
       } finally {
         setLoading(false)
       }
@@ -127,42 +125,46 @@ export function CharacterCards() {
            url.startsWith('/')
   }
 
-  const generateFallbackCharacters = (category: string, count: number): Character[] => {
-    const activityData = [
-      { name: "Practice a new language", description: "with HyperGlot" },
-      { name: "Practice interviewing", description: "with Interviewer" },
-      { name: "Brainstorm ideas", description: "with Brainstormer" },
-      { name: "Get book recommendations", description: "with Librarian Linda" },
-      { name: "Plan a trip", description: "with Trip Planner" },
-      { name: "Write a story", description: "with Creative Helper" },
-      { name: "Play a game", description: "with Space Adventure Game" },
-      { name: "Help me make a decision", description: "with DecisionHelper" },
-    ]
+
+  const handleCardClick = async (character: Character) => {
+    // If user is not signed in, prompt them to sign up first
+    if (!isSignedIn) {
+      setIsOpen(true)
+      return
+    }
     
-    const communityData = [
-      { name: "Film Expert", description: "Discuss films with a passionate critic" },
-      { name: "Fitness Coach", description: "Your personal workout companion" },
-      { name: "Recipe Guide", description: "Helps you cook delicious meals" },
-      { name: "Code Helper", description: "Programming assistant for developers" },
-      { name: "History Buff", description: "Travel through time with a history expert" },
-      { name: "Poetry Muse", description: "Inspire your creative writing" },
-      { name: "Financial Advisor", description: "Get tips for managing your finances" },
-      { name: "Travel Guide", description: "Explore destinations around the world" },
-    ]
-
-    const data = category === "community" ? communityData : activityData;
-
-    return data.slice(0, count).map((item, index) => ({
-      id: `${category}-${index}`,
-      name: item.name,
-      description: item.description,
-      imageUrl: `https://robohash.org/${encodeURIComponent(item.name)}?size=64x64&set=set4`,
-      category,
-    }))
-  }
-
-  const handleCardClick = (character: Character) => {
-    router.push(`/chat/${character.id}?prompt=Hi`)
+    try {
+      setClickingCharId(character.id)
+      console.log(`Creating conversation for character: ${character.id}`)
+      
+      // Create a conversation with this character via the API
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ characterId: character.id })
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`Server error: ${response.status} - ${errorText}`)
+        throw new Error(`Failed to create conversation: ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      console.log("Conversation created successfully:", data)
+      
+      // Navigate to the chat with the created conversation
+      router.push(`/chat/${data.id}`)
+    } catch (error) {
+      console.error("Error creating conversation:", error)
+      toast.error("Failed to start chat", {
+        description: "Please try again later."
+      })
+    } finally {
+      setClickingCharId(null)
+    }
   }
 
   const scroll = (categoryIndex: number, direction: "left" | "right") => {
@@ -213,7 +215,7 @@ export function CharacterCards() {
       ) : (
         categories.map((category, categoryIndex) => (
           <div key={category.title} className="space-y-3">
-            <h2 className="text-xl font-semibold px-4 md:px-6">{category.title}</h2>
+            <h2 className="text-xl font-semibold px-4 md:px-2">{category.title}</h2>
 
             <div className="relative group">
               {/* Scroll buttons */}
@@ -243,7 +245,9 @@ export function CharacterCards() {
                 {category.characters.map((character) => (
                   <div
                     key={character.id}
-                    className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900 border dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 snap-start"
+                    className={`w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-neutral-900 border dark:border-neutral-800 hover:border-primary/50 dark:hover:border-primary/50 snap-start ${
+                      clickingCharId === character.id ? "opacity-70 pointer-events-none" : ""
+                    }`}
                     onClick={() => handleCardClick(character)}
                   >
                     <div className="flex p-3">
@@ -263,8 +267,11 @@ export function CharacterCards() {
                         </p>
                       </div>
                     </div>
-                    <div className="px-3 pb-2 flex items-center">
+                    <div className="px-3 pb-2 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
+                      {clickingCharId === character.id && (
+                        <span className="text-xs text-primary animate-pulse">Creating chat...</span>
+                      )}
                     </div>
                   </div>
                 ))}
