@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import DiscoverPageContent from "@/components/discover/discover-page-content"
+import ThemeContextProvider from "@/context/theme-context"
 
 export const metadata: Metadata = {
   title: "Discover Characters - Chatstream",
@@ -8,8 +9,10 @@ export const metadata: Metadata = {
 
 export default function DiscoverPage() {
   return (
+    <ThemeContextProvider>
     <div className="flex h-screen">
         <DiscoverPageContent />
     </div>
+    </ThemeContextProvider>
   )
 }

@@ -8,6 +8,7 @@ import "../styles/clerk.css";
 import ThemeSwitch from "@/components/theme-switch";
 import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { RootLayoutContent } from "@/components/layout/root-layout-content";
+import ThemeContextProvider from "@/context/theme-context";
 
 export const metadata: Metadata = {
   title: "charstream.xyz | Personalized AI Characters for every moment of your day",
@@ -53,6 +54,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <ThemeContextProvider>
         <PostHogProvider>
           <ClerkProvider>
             <RootLayoutContent>
@@ -71,6 +73,7 @@ export default function RootLayout({
             />
           </ClerkProvider>
         </PostHogProvider>
+        </ThemeContextProvider>
       </body>
     </html>
   );

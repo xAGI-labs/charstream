@@ -1,54 +1,59 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, createContext, useContext } from "react";
 
 type Theme = "light" | "dark";
 
-type ThemeContextProviderProps = { children: React.ReactNode };
+type ThemeContextProviderProps = {
+  children: React.ReactNode;
+};
 
-type ThemeContextType = { theme: Theme; toggleTheme: () => void };
+type ThemeContextType = {
+  theme: Theme;
+  toggleTheme: () => void;
+};
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
-export default function ThemeContextProvider({ children }: ThemeContextProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Initialize theme from localStorage or default to "dark"
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme") as Theme | null;
-      return savedTheme || "dark";
-    }
-    return "dark";
-  });
+export default function ThemeContextProvider({
+  children,
+}: ThemeContextProviderProps) {
+  const [theme, setTheme] = useState<Theme>("light");
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-
-    // Persist theme in localStorage
-    localStorage.setItem("theme", newTheme);
-
-    // Apply theme to the document
-    if (newTheme === "dark") {
+    if (theme === "light") {
+      setTheme("dark");
+      window.localStorage.setItem("theme", "dark");
       document.documentElement.classList.add("dark");
     } else {
+      setTheme("light");
+      window.localStorage.setItem("theme", "light");
       document.documentElement.classList.remove("dark");
     }
   };
 
   useEffect(() => {
-    // Ensure the theme is applied on every render
-    const savedTheme = localStorage.getItem("theme") as Theme | null;
-    const currentTheme = savedTheme || theme;
+    const localTheme = window.localStorage.getItem("theme") as Theme | null;
 
-    if (currentTheme === "dark") {
+    if (localTheme) {
+      setTheme(localTheme);
+
+      if (localTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark");
       document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
     }
-  }, [theme]);
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        toggleTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -56,8 +61,10 @@ export default function ThemeContextProvider({ children }: ThemeContextProviderP
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (!context) {
+
+  if (context === null) {
     throw new Error("useTheme must be used within a ThemeContextProvider");
   }
+
   return context;
 }

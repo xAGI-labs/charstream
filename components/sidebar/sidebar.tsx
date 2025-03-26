@@ -241,7 +241,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
         </div>
 
         <div className={cn("p-3 flex justify-center transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
-          <div className="w-[4rem] h-[1.5rem]">
+          <div className="w-[4rem] h-[1.5rem] mb-4">
             <ThemeSwitch />
           </div>
         </div>
