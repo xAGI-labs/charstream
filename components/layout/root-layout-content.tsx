@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar/sidebar"
 import { MobileNavigation } from "@/components/sidebar/mobile-navigation"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useSignupDialog } from "@/hooks/use-signup-dialog"
+import ThemeContextProvider from "@/context/theme-context"
 
 export function RootLayoutContent({
   children
@@ -19,6 +20,7 @@ export function RootLayoutContent({
   const displayName = user?.firstName || user?.username || "Guest"
 
   return (
+    <ThemeContextProvider>
     <div className="flex min-h-screen bg-background">
       {/* Desktop sidebar - hidden on mobile */}
       <div className="hidden md:block">
@@ -46,5 +48,6 @@ export function RootLayoutContent({
         </div>
       </main>
     </div>
+    </ThemeContextProvider>
   )
 }
