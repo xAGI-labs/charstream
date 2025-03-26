@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Character {
   id: string
@@ -23,10 +24,10 @@ interface CategoryGroup {
 export function CharacterCards() {
   const [categories, setCategories] = useState<CategoryGroup[]>([
     { title: "Try these", characters: [] },
-    { title: "Voices", characters: [] },
+    { title: "Community Characters", characters: [] },
   ])
-  const [loading, setLoading] = useState(true) // Add loading state
-  const [error, setError] = useState<string | null>(null) // Add error state
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { theme } = useTheme()
 
@@ -39,43 +40,38 @@ export function CharacterCards() {
       setError(null)
       try {
         console.log("Fetching characters...")
-        const response = await fetch("/api/home-characters?category=all")
+        // Fetch both home and public characters in parallel for speed
+        const [homeResponse, publicResponse] = await Promise.all([
+          fetch("/api/home-characters?category=all"),
+          fetch("/api/characters?public=true")
+        ])
         
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error("API error response:", errorText)
-          throw new Error(`Failed to fetch characters: ${response.status} ${response.statusText}`)
+        if (!homeResponse.ok) {
+          throw new Error(`Failed to fetch home characters: ${homeResponse.status}`)
         }
         
-        const data = await response.json()
-        console.log("Fetched data:", data)
+        if (!publicResponse.ok) {
+          throw new Error(`Failed to fetch public characters: ${publicResponse.status}`)
+        }
+        
+        const homeData = await homeResponse.json()
+        const publicData = await publicResponse.json()
+        
+        console.log("Fetched home data:", homeData)
+        console.log("Fetched public data:", publicData)
 
-        if (!Array.isArray(data)) {
-          console.error("Invalid data format:", data)
-          throw new Error("Invalid data format received from API")
+        if (!Array.isArray(homeData)) {
+          throw new Error("Invalid data format received from home characters API")
         }
 
-        if (data.length === 0) {
-          console.warn("Empty data array received from API")
-        }
+        const publicCharacters = Array.isArray(publicData.characters) ? publicData.characters : []
 
-        // Split characters into categories
-        const activities = data
-          .filter((char: any) => char.category === "activity" || !char.category)
+        const communityCharacters = publicCharacters
           .slice(0, 8)
           .map(mapCharacterData)
 
-        const voices = data
-          .filter((char: any) => char.category === "voice")
-          .slice(0, 4)
-          .map(mapCharacterData)
-
-        console.log("Processed activities:", activities)
-        console.log("Processed voices:", voices)
-
         setCategories([
-          { title: "Try these", characters: activities },
-          { title: "Voices", characters: voices },
+          { title: "Try These", characters: communityCharacters },
         ])
       } catch (error: any) {
         console.error("Error fetching characters:", error)
@@ -84,12 +80,8 @@ export function CharacterCards() {
         // Fallback data if API fails
         setCategories([
           {
-            title: "Try these",
-            characters: generateFallbackCharacters("activity", 8),
-          },
-          {
-            title: "Voices",
-            characters: generateFallbackCharacters("voice", 4),
+            title: "Try These",
+            characters: generateFallbackCharacters("community", 8),
           },
         ])
       } finally {
@@ -146,15 +138,19 @@ export function CharacterCards() {
       { name: "Play a game", description: "with Space Adventure Game" },
       { name: "Help me make a decision", description: "with DecisionHelper" },
     ]
-
-    const voiceData = [
-      { name: "Bodyguard", description: '"My job is to protect you..." 👍 (Esp-Eng)' },
-      { name: "Soft Bubbly", description: "bubbly little voice" },
-      { name: "Galen", description: "Illuminates dark corners of wisdom, lore and legend" },
-      { name: "Tala", description: "Always up for an adventure" },
+    
+    const communityData = [
+      { name: "Film Expert", description: "Discuss films with a passionate critic" },
+      { name: "Fitness Coach", description: "Your personal workout companion" },
+      { name: "Recipe Guide", description: "Helps you cook delicious meals" },
+      { name: "Code Helper", description: "Programming assistant for developers" },
+      { name: "History Buff", description: "Travel through time with a history expert" },
+      { name: "Poetry Muse", description: "Inspire your creative writing" },
+      { name: "Financial Advisor", description: "Get tips for managing your finances" },
+      { name: "Travel Guide", description: "Explore destinations around the world" },
     ]
 
-    const data = category === "activity" ? activityData : voiceData
+    const data = category === "community" ? communityData : activityData;
 
     return data.slice(0, count).map((item, index) => ({
       id: `${category}-${index}`,
@@ -182,10 +178,36 @@ export function CharacterCards() {
     })
   }
 
+  // Character card skeleton
+  const CharacterCardSkeleton = () => (
+    <div className="flex-shrink-0 w-64 rounded-lg bg-card border p-3 animate-pulse">
+      <div className="flex">
+        <div className="h-16 w-16 flex-shrink-0 rounded-md bg-muted"></div>
+        <div className="ml-3 flex flex-col flex-1 space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-5/6" />
+        </div>
+      </div>
+      <div className="mt-2">
+        <Skeleton className="h-3 w-12 ml-auto" />
+      </div>
+    </div>
+  )
+
   return (
     <div className="w-full py-6 space-y-8">
       {loading ? (
-        <div className="text-center text-muted-foreground">Loading characters...</div>
+        categories.map((category, categoryIndex) => (
+          <div key={categoryIndex} className="space-y-3">
+            <h2 className="text-xl font-semibold px-4 md:px-6">{category.title}</h2>
+            <div className="flex overflow-x-auto scrollbar-hide gap-3 px-4 md:px-6 pb-2">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <CharacterCardSkeleton key={idx} />
+              ))}
+            </div>
+          </div>
+        ))
       ) : error ? (
         <div className="text-center text-red-500">Error: {error}</div>
       ) : (
@@ -219,52 +241,32 @@ export function CharacterCards() {
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
                 {category.characters.map((character) => (
-                  <Card
+                  <div
                     key={character.id}
-                    className="flex-shrink-0 w-[250px] snap-start cursor-pointer border dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 transition-colors"
+                    className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900 border dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 snap-start"
                     onClick={() => handleCardClick(character)}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden bg-muted">
-                          <Image
+                    <div className="flex p-3">
+                      <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
+                        {character.imageUrl && (
+                          <img
                             src={character.imageUrl || "/placeholder.svg"}
                             alt={character.name}
-                            width={48}
-                            height={48}
-                            className="object-cover"
+                            className="h-full w-full object-cover"
                           />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-sm">{character.name}</h3>
-                          <p className="text-xs text-muted-foreground">{character.description}</p>
-                        </div>
+                        )}
                       </div>
-
-                      {category.title === "Voices" && (
-                        <div className="mt-3 flex justify-center">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="text-primary"
-                            >
-                              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                      <div className="ml-3 flex flex-col overflow-hidden">
+                        <h3 className="font-semibold text-sm line-clamp-1">{character.name}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {character.description || "No description available."}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="px-3 pb-2 flex items-center">
+                      <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
