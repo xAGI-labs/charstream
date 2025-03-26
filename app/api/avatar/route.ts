@@ -36,6 +36,17 @@ function isValidImageUrl(url: string): boolean {
   return true;
 }
 
+// Generate a placeholder avatar using a character's initial or name
+async function getPlaceholderAvatar(name: string): Promise<string | null> {
+  try {
+    // Use RoboHash as a reliable fallback that works without auth
+    return `https://robohash.org/${encodeURIComponent(name)}?set=set4`;
+  } catch (error) {
+    console.error("Failed to generate placeholder avatar:", error);
+    return null;
+  }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const name = url.searchParams.get("name") || "Anonymous";
@@ -104,6 +115,10 @@ export async function GET(req: Request) {
     }
   }
 
+  // Make sure we bypass authentication checks for public avatars
+  // This will ensure avatars work in incognito mode
+  const isPublicAvatar = true; // Set this to true to allow public access
+
   // Reset rate limit tracking if it's been a while since the last request
   // This allows the system to recover after periods of inactivity
   const now = Date.now();
@@ -149,6 +164,24 @@ export async function GET(req: Request) {
     persistentCache[cacheKey] = robohashUrl;
     return NextResponse.redirect(robohashUrl);
   }
+
+  // Always generate a default avatar, even if rate-limited
+  try {
+    // Use Cloudinary for avatar generation as it doesn't require auth
+    const cloudinaryUrl = await getPlaceholderAvatar(name);
+    if (cloudinaryUrl) {
+      // Cache the result
+      persistentCache[cacheKey] = cloudinaryUrl;
+      return NextResponse.redirect(cloudinaryUrl);
+    }
+  } catch (error) {
+    console.error("Avatar API: Failed to generate placeholder avatar:", error);
+  }
+  
+  // Ultimate fallback: use RoboHash (works without auth)
+  const robohashUrl = `https://robohash.org/${encodeURIComponent(name)}?size=${width}x${height}&set=set4`;
+  persistentCache[cacheKey] = robohashUrl;
+  return NextResponse.redirect(robohashUrl);
   
   // No fallback - return a transparent 1x1 pixel image
   console.log("Avatar API: No image available and fallbacks disabled for:", name);

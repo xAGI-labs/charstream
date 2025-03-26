@@ -20,6 +20,7 @@ export default function DiscoverPageContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isCreatingConversation, setIsCreatingConversation] = useState(false)
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({})
   const router = useRouter()
 
   useEffect(() => {
@@ -133,6 +134,10 @@ export default function DiscoverPageContent() {
     return [...popularOnes, ...educationalOnes, ...communityOnes]
   }
 
+  const getFallbackAvatarUrl = (name: string) => {
+    return `/api/avatar?name=${encodeURIComponent(name)}&width=64&height=64&cache=true&t=${Date.now()}`
+  }
+
   return (
     <div className="flex flex-col w-full max-w-6xl mx-auto px-4 py-8 h-screen">
       <CreateCharacterDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
@@ -206,9 +211,16 @@ export default function DiscoverPageContent() {
                     >
                       <div className="flex p-3">
                         <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                          {character.imageUrl && (
+                          {character.imageUrl && !failedImages[character.id] ? (
                             <img
-                              src={character.imageUrl || "/placeholder.svg"}
+                              src={character.imageUrl}
+                              alt={character.name}
+                              className="h-full w-full object-cover"
+                              onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
+                            />
+                          ) : (
+                            <img
+                              src={getFallbackAvatarUrl(character.name)}
                               alt={character.name}
                               className="h-full w-full object-cover"
                             />
@@ -258,9 +270,16 @@ export default function DiscoverPageContent() {
                     >
                       <div className="flex p-3">
                         <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                          {character.imageUrl && (
+                          {character.imageUrl && !failedImages[character.id] ? (
                             <img
-                              src={character.imageUrl || "/placeholder.svg"}
+                              src={character.imageUrl}
+                              alt={character.name}
+                              className="h-full w-full object-cover"
+                              onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
+                            />
+                          ) : (
+                            <img
+                              src={getFallbackAvatarUrl(character.name)}
                               alt={character.name}
                               className="h-full w-full object-cover"
                             />
@@ -314,9 +333,16 @@ export default function DiscoverPageContent() {
                       >
                         <div className="flex p-3">
                           <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                            {character.imageUrl && (
+                            {character.imageUrl && !failedImages[character.id] ? (
                               <img
-                                src={character.imageUrl || "/placeholder.svg"}
+                                src={character.imageUrl}
+                                alt={character.name}
+                                className="h-full w-full object-cover"
+                                onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
+                              />
+                            ) : (
+                              <img
+                                src={getFallbackAvatarUrl(character.name)}
                                 alt={character.name}
                                 className="h-full w-full object-cover"
                               />
@@ -369,9 +395,16 @@ export default function DiscoverPageContent() {
                       >
                         <div className="flex p-3">
                           <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                            {character.imageUrl && (
+                            {character.imageUrl && !failedImages[character.id] ? (
                               <img
-                                src={character.imageUrl || "/placeholder.svg"}
+                                src={character.imageUrl}
+                                alt={character.name}
+                                className="h-full w-full object-cover"
+                                onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
+                              />
+                            ) : (
+                              <img
+                                src={getFallbackAvatarUrl(character.name)}
                                 alt={character.name}
                                 className="h-full w-full object-cover"
                               />

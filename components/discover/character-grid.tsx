@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { useState } from "react"
 import { Character } from "@/types/character"
 
 interface CharacterGridProps {
@@ -7,12 +8,20 @@ interface CharacterGridProps {
 }
 
 export function CharacterGrid({ characters, onCharacterClick }: CharacterGridProps) {
+  // Track which images have failed to load
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({})
+
   if (characters.length === 0) {
     return (
       <div className="text-center py-12 bg-muted/30 rounded-lg">
         <p className="text-muted-foreground">No characters available in this category.</p>
       </div>
     )
+  }
+
+  // Generate a fallback avatar URL
+  const getFallbackAvatarUrl = (name: string) => {
+    return `/api/avatar?name=${encodeURIComponent(name)}&width=256&height=256&cache=true&t=${Date.now()}`
   }
 
   return (
@@ -24,17 +33,24 @@ export function CharacterGrid({ characters, onCharacterClick }: CharacterGridPro
           onClick={() => onCharacterClick(character)}
         >
           <div className="aspect-square relative mb-3 rounded-md overflow-hidden bg-muted">
-            {character.imageUrl ? (
+            {character.imageUrl && !failedImages[character.id] ? (
               <Image
                 src={character.imageUrl}
                 alt={character.name}
                 fill
                 className="object-cover"
+                onError={() => {
+                  // Mark this image as failed and it will use the fallback
+                  setFailedImages(prev => ({ ...prev, [character.id]: true }))
+                }}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                <span className="text-primary font-bold text-2xl">{character.name.charAt(0)}</span>
-              </div>
+              <Image
+                src={getFallbackAvatarUrl(character.name)}
+                alt={character.name}
+                fill
+                className="object-cover"
+              />
             )}
           </div>
           <h3 className="font-medium truncate">{character.name}</h3>
