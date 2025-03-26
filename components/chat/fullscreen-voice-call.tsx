@@ -161,7 +161,7 @@ export function FullscreenVoiceCall({
   const isDevMode = process.env.NODE_ENV === 'development';
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center py-10 px-4">
+    <div className="w-full h-screen flex flex-col items-center justify-center py-10 px-4 md:-mt-30">
       {/* Character Avatar and Info */}
       <div className="mb-8 flex flex-col items-center">
         <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary/20 mb-3">
@@ -188,7 +188,7 @@ export function FullscreenVoiceCall({
         {/* Status indicator */}
         <div className="flex items-center text-sm text-muted-foreground">
           <span className={`inline-block h-2 w-2 rounded-full mr-2 ${isRecording ? "bg-red-500 animate-pulse" : isProcessing ? "bg-yellow-500" : isResponding ? "bg-blue-500" : "bg-green-500"}`}></span>
-          <span>{isRecording ? "Listening..." : isProcessing ? "Processing..." : isResponding ? "Speaking..." : "Ready"}</span>
+          <span>{isRecording ? "Listening..." : isProcessing ? "Thinking..." : isResponding ? "Speaking..." : "Ready"}</span>
         </div>
       </div>
       
@@ -320,7 +320,7 @@ export function FullscreenVoiceCall({
           }}
           variant="outline"
           size="sm"
-          className="mt-4 gap-2"
+          className="mt-12 gap-2"
         >
           <Repeat className={cn("h-4 w-4", autoListen ? "text-primary" : "text-muted-foreground")} />
           <span>{autoListen ? "Auto-Listening On" : "Auto-Listening Off"}</span>
