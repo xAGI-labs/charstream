@@ -193,6 +193,54 @@ function getAvatarPrompt(name: string, description?: string): string {
   return prompt;
 }
 
+// Add this function to the avatar.ts file
+export async function ensureCloudinaryAvatar(togetherUrl: string, name: string): Promise<string> {
+  // Cloudinary configuration
+  const CLOUDINARY_CLOUD_NAME = "dht33kdwe"; 
+  const CLOUDINARY_UPLOAD_PRESET = "placeholder";
+  
+  // If it's already a Cloudinary URL, return it
+  if (togetherUrl.includes(`res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}`)) {
+    return togetherUrl;
+  }
+  
+  try {
+    console.log(`Converting Together URL to Cloudinary: ${togetherUrl}`);
+    
+    // Create a cache key from the name
+    const cacheKey = `avatar-${name}`.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append("file", togetherUrl);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    formData.append("public_id", cacheKey);
+    
+    const uploadResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+    
+    if (!uploadResponse.ok) {
+      console.error(`Failed to upload to Cloudinary: ${await uploadResponse.text()}`);
+      // Return original URL if upload fails
+      return togetherUrl;
+    }
+    
+    const result = await uploadResponse.json();
+    console.log(`Successfully converted to Cloudinary: ${result.secure_url}`);
+    return result.secure_url;
+    
+  } catch (error) {
+    console.error(`Error uploading to Cloudinary:`, error);
+    // Return original URL if upload fails
+    return togetherUrl;
+  }
+}
+
 // Export utility functions
 export const getAvatarCache = () => avatarCache;
 

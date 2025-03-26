@@ -19,9 +19,10 @@ export function CharacterGrid({ characters, onCharacterClick }: CharacterGridPro
     )
   }
 
-  // Generate a fallback avatar URL
+  // Generate a fallback avatar URL that will reliably work in incognito
   const getFallbackAvatarUrl = (name: string) => {
-    return `/api/avatar?name=${encodeURIComponent(name)}&width=256&height=256&cache=true&t=${Date.now()}`
+    // Always use allowRobohashFallback=true to ensure we get a reliable fallback
+    return `/api/avatar?name=${encodeURIComponent(name)}&width=256&height=256&cache=true&allowRobohashFallback=true&t=${Date.now()}`
   }
 
   return (

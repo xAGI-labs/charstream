@@ -134,8 +134,9 @@ export default function DiscoverPageContent() {
     return [...popularOnes, ...educationalOnes, ...communityOnes]
   }
 
+  // Updated fallback avatar URL function to ensure it works in incognito
   const getFallbackAvatarUrl = (name: string) => {
-    return `/api/avatar?name=${encodeURIComponent(name)}&width=64&height=64&cache=true&t=${Date.now()}`
+    return `/api/avatar?name=${encodeURIComponent(name)}&width=64&height=64&cache=true&allowRobohashFallback=true&t=${Date.now()}`
   }
 
   return (
