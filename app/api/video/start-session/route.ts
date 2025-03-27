@@ -53,6 +53,19 @@ export async function POST(req: Request) {
       throw new Error("Room URL is not accessible");
     }
 
+    // Log headers to debug X-Frame-Options or CSP issues
+    console.log("Room URL headers:", headResponse.headers);
+
+    const xFrameOptions = headResponse.headers.get("x-frame-options");
+    if (xFrameOptions) {
+      console.warn("X-Frame-Options header detected:", xFrameOptions);
+    }
+
+    const contentSecurityPolicy = headResponse.headers.get("content-security-policy");
+    if (contentSecurityPolicy) {
+      console.warn("Content-Security-Policy header detected:", contentSecurityPolicy);
+    }
+
     console.log("Room URL is accessible:", roomUrl);
 
     // Return the room URL

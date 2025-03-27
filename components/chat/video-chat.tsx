@@ -168,12 +168,16 @@ export function VideoChat({
             ref={videoRef}
             src={sessionData.url}
             allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            // Temporarily remove sandbox for testing
+            // sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             className="w-full h-full border-0"
             style={{ minHeight: "500px" }} // Ensure iframe has sufficient size
             onLoad={() => console.log("Iframe loaded successfully")}
             onError={(e) => console.error("Iframe failed to load", e)}
           ></iframe>
+          <p className="text-white mt-2">
+            If the video does not load, <a href={sessionData.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">click here</a> to open it in a new tab.
+          </p>
         </>
       )}
     </div>
