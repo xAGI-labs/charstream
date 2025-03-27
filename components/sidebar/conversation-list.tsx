@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useAuth } from "@clerk/nextjs"
 import Link from "next/link"
 import Image from "next/image"
@@ -37,6 +37,26 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
   const { userId } = useAuth()
   const pathname = usePathname()
 
+  const fetchConversations = useCallback(async () => {
+    if (!userId) return
+    
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/conversations')
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch conversations')
+      }
+      
+      const data = await response.json()
+      setConversations(data)
+    } catch (error) {
+      console.error('Error fetching conversations:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userId])
+
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -49,31 +69,29 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
   }, [])
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      if (!userId) return
-
-      try {
-        const response = await fetch('/api/conversations')
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch conversations')
-        }
-        
-        const data = await response.json()
-        setConversations(data)
-      } catch (error) {
-        console.error('Error fetching conversations:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     if (userId) {
       fetchConversations()
     } else {
       setIsLoading(false)
     }
-  }, [userId])
+  }, [userId, fetchConversations])
+
+  useEffect(() => {
+    const handleConversationCreated = () => {
+      console.log("Conversation created event received, refreshing list")
+      fetchConversations()
+    }
+    
+    window.addEventListener('conversation-created', handleConversationCreated)
+    
+    return () => {
+      window.removeEventListener('conversation-created', handleConversationCreated)
+    }
+  }, [fetchConversations])
+
+  useEffect(() => {
+    window.refreshConversationList = fetchConversations
+  }, [fetchConversations])
 
   if (isLoading) {
     return (
@@ -129,7 +147,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
                   ? "bg-primary/10 text-primary" 
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )}
-              title={conversation.character.name} // Remove "Conversation With" prefix
+              title={conversation.character.name}
             >
               <Avatar className="h-6 w-6 flex-shrink-0">
                 <AvatarImage src={imageUrl} alt={conversation.character.name} />
@@ -148,4 +166,10 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
       </TooltipProvider>
     </div>
   )
+}
+
+declare global {
+  interface Window {
+    refreshConversationList: () => Promise<void>;
+  }
 }
