@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs/server"
+import { auth } from "@clerk/nextjs/server"
 import { PrismaClient } from "@prisma/client"
-import axios from 'axios'
-import { enrichCharacterDescription, generateDetailedInstructions } from "@/lib/character-enrichment"
-import { ensureCloudinaryAvatar } from "@/lib/avatar"
+import { generateDetailedInstructions } from "@/lib/character-enrichment"
+import { ensureCloudinaryAvatar, generateAvatar } from "@/lib/avatar"
 
 const prisma = new PrismaClient()
 
@@ -22,38 +21,34 @@ export async function POST(req: Request) {
       return new NextResponse("Name is required", { status: 400 })
     }
 
-    // Enrich the character if needed
     if (description && !instructions) {
       try {
-        // Generate instructions if not provided
         instructions = await generateDetailedInstructions(name, description)
       } catch (error) {
         console.error("Error generating instructions:", error)
-        // Continue with empty instructions if generation fails
         instructions = ""
       }
     } else if (!description && !instructions) {
-      // If both are missing, create a simple default
-      description = `${name} is a helpful assistant.`
-      instructions = `You are ${name}, a helpful assistant who responds to user queries in a friendly way.`
+      description = `${name} is a person.`
+      instructions = `You are ${name}, a human who responds to user queries in a friendly yet raw and real way.`
     }
 
-    // If no image URL is provided, we'll rely on avatar generation via the avatar API
     if (imageUrl) {
-      // IMPORTANT: Convert any Together API URLs to Cloudinary URLs
       if (imageUrl.includes('api.together.ai') || imageUrl.includes('together.xyz')) {
         console.log(`Converting Together API URL to Cloudinary: ${imageUrl}`);
         imageUrl = await ensureCloudinaryAvatar(imageUrl, name);
       }
+    } else {
+      imageUrl = await generateAvatar(name, description);
+      console.log(`Generated new avatar for ${name}: ${imageUrl}`);
     }
 
-    // Create the character
     const character = await prisma.character.create({
       data: {
         name,
         description,
         instructions,
-        imageUrl, // Store Cloudinary URL or null
+        imageUrl,
         creatorId: userId,
         isPublic
       },
@@ -75,15 +70,12 @@ export async function GET(req: Request) {
     const limit = parseInt(url.searchParams.get("limit") || "20")
     const skip = (page - 1) * limit
 
-    // Build where clause
     const where: any = {}
     
-    // Only return public characters unless specified otherwise
     if (isPublic) {
       where.isPublic = true
     }
     
-    // Add search filter if provided
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
