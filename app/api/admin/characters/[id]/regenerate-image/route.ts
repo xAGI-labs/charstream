@@ -29,7 +29,9 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    const { id } = params
+    // Fix: Await the params before accessing id
+    const awaitedParams = await params;
+    const id = awaitedParams.id;
     
     // Check if character exists
     const character = await prisma.character.findUnique({
@@ -40,41 +42,41 @@ export async function POST(
       return new NextResponse("Character not found", { status: 404 })
     }
     
-    // Generate new avatar
+    // Generate new avatar - this will automatically upload to Cloudinary now
     try {
-      console.log(`Regenerating avatar for ${character.name}...`)
-      const generatedUrl = await generateAvatar(character.name, character.description || undefined)
+      console.log(`Regenerating avatar for character ${character.name}...`)
       
-      if (generatedUrl) {
-        // Update the character with new image
-        const updatedCharacter = await prisma.character.update({
-          where: { id },
-          data: { imageUrl: generatedUrl }
-        })
-        
-        return NextResponse.json({ 
-          success: true, 
-          imageUrl: generatedUrl,
-          message: "Character image updated successfully"
-        })
-      } else {
+      // Get the Cloudinary URL directly (generateAvatar now handles the conversion)
+      const cloudinaryUrl = await generateAvatar(character.name, character.description || undefined)
+      
+      if (!cloudinaryUrl) {
         return NextResponse.json({
           success: false,
           message: "Failed to generate image"
         }, { status: 500 })
       }
+      
+      console.log(`Generated Cloudinary URL: ${cloudinaryUrl}`);
+      
+      // Update the character with the Cloudinary URL
+      const updatedCharacter = await prisma.character.update({
+        where: { id },
+        data: { imageUrl: cloudinaryUrl }
+      })
+      
+      return NextResponse.json({ 
+        success: true, 
+        imageUrl: updatedCharacter.imageUrl 
+      })
     } catch (error) {
-      console.error(`Failed to regenerate avatar for ${character.name}:`, error)
+      console.error("Error generating avatar:", error)
       return NextResponse.json({
         success: false,
-        message: error instanceof Error ? error.message : "Unknown error generating image"
+        message: "Error generating avatar"
       }, { status: 500 })
     }
   } catch (error) {
     console.error("[ADMIN_CHARACTER_REGENERATE_IMAGE]", error)
-    return NextResponse.json({
-      success: false,
-      message: "Internal server error"
-    }, { status: 500 })
+    return new NextResponse("Internal error", { status: 500 })
   }
 }

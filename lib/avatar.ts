@@ -70,10 +70,20 @@ export async function generateAvatar(name: string, description?: string): Promis
         );
 
         if (response.data?.data?.[0]?.url) {
-          const imageUrl = response.data.data[0].url;
-          // Cache the URL
-          avatarCache[cacheKey] = imageUrl;
-          return imageUrl;
+          const togetherUrl = response.data.data[0].url;
+          console.log(`Generated Together API URL: ${togetherUrl}`);
+          
+          // CRITICAL FIX: Always convert Together URL to Cloudinary before returning
+          const cloudinaryUrl = await uploadToCloudinary(togetherUrl, name);
+          if (cloudinaryUrl) {
+            console.log(`Successfully converted to Cloudinary URL: ${cloudinaryUrl}`);
+            // Cache the Cloudinary URL
+            avatarCache[cacheKey] = cloudinaryUrl;
+            return cloudinaryUrl;
+          } else {
+            console.error("Failed to upload to Cloudinary, falling back to placeholder");
+            return await getPlaceholderAvatar(name);
+          }
         }
       } catch (error) {
         console.error("Together API error:", error);
@@ -131,6 +141,52 @@ export async function generateAvatar(name: string, description?: string): Promis
 }
 
 /**
+ * Upload image from Together API to Cloudinary
+ */
+async function uploadToCloudinary(imageUrl: string, name: string): Promise<string | null> {
+  if (!imageUrl) return null;
+  
+  // If already a Cloudinary URL, return as is
+  if (imageUrl.includes(`res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}`)) {
+    return imageUrl;
+  }
+  
+  try {
+    console.log(`Uploading to Cloudinary from URL: ${imageUrl}`);
+    
+    // Create a consistent, URL-safe cache key
+    const cacheKey = `avatar-${name}`.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+    
+    // Use FormData for reliable uploading
+    const formData = new FormData();
+    formData.append("file", imageUrl);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    formData.append("public_id", cacheKey);
+    
+    const uploadResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+    
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error(`Failed to upload to Cloudinary: ${errorText}`);
+      return null;
+    }
+    
+    const result = await uploadResponse.json();
+    console.log(`Successfully uploaded to Cloudinary: ${result.secure_url}`);
+    return result.secure_url;
+  } catch (error) {
+    console.error(`Error uploading to Cloudinary:`, error);
+    return null;
+  }
+}
+
+/**
  * Check if an image already exists in Cloudinary cache
  */
 async function checkCloudinaryCache(cacheKey: string): Promise<string | null> {
@@ -180,15 +236,18 @@ async function getPlaceholderAvatar(name: string): Promise<string | null> {
  */
 function getAvatarPrompt(name: string, description?: string): string {
   // Base prompt template
-  let prompt = `High quality, professional portrait image for a character named ${name}`;
+  let prompt = `Portrait of a character named ${name} in the style of Studio Ghibli animation`;
   
   // Add details from description if available
   if (description && description.trim().length > 0) {
     prompt += `, who is ${description}`;
   }
   
-  // Add styles and quality instructions
-  prompt += `. Digital art style, detailed facial features, high resolution, professional lighting, neutral expression, looking at viewer.`;
+  // Add Studio Ghibli-specific style instructions
+  prompt += `. Colorful, hand-drawn animation style, soft lighting, expressive eyes, gentle facial features, 
+  whimsical, painterly background, Miyazaki-inspired character design, innocent expression, 
+  warm color palette, slightly exaggerated proportions, detailed hair texture. 
+  Make the character look like they were made by animators at Studio ghibli`;
   
   return prompt;
 }

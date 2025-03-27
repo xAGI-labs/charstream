@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { PrismaClient } from "@prisma/client"
+import { ensureCloudinaryAvatar } from "@/lib/avatar"
 
 const prisma = new PrismaClient()
 
@@ -70,7 +71,7 @@ export async function PATCH(
     }
     
     const body = await req.json()
-    const { name, description, instructions, isPublic } = body
+    const { name, description, instructions, isPublic, imageUrl } = body
     
     // Check if user owns this character
     const character = await prisma.character.findUnique({
@@ -87,6 +88,18 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 })
     }
     
+    // Process imageUrl if it's being updated
+    let processedImageUrl = character.imageUrl;
+    if (imageUrl && imageUrl !== character.imageUrl) {
+      // Check if it's a Together API URL and convert to Cloudinary
+      if (imageUrl.includes('api.together.ai') || imageUrl.includes('together.xyz')) {
+        console.log(`Converting Together API URL to Cloudinary: ${imageUrl}`);
+        processedImageUrl = await ensureCloudinaryAvatar(imageUrl, name || character.name);
+      } else {
+        processedImageUrl = imageUrl;
+      }
+    }
+    
     // Update the character
     const updatedCharacter = await prisma.character.update({
       where: {
@@ -96,7 +109,8 @@ export async function PATCH(
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(instructions && { instructions }),
-        ...(isPublic !== undefined && { isPublic })
+        ...(isPublic !== undefined && { isPublic }),
+        ...(imageUrl && { imageUrl: processedImageUrl }) // Use the processed URL
       }
     })
     
