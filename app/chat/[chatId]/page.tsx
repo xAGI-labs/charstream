@@ -9,6 +9,7 @@ import { ChatInput } from "@/components/chat/chat-input"
 import { ChatModeSwitcher, ChatMode } from "@/components/chat/chat-mode-switcher"
 import { CharacterInfo } from "@/components/chat/character-info" 
 import { VoiceChat } from "@/components/chat/voice-chat"
+import { VideoChat } from "@/components/chat/video-chat"
 import { useConversation } from "@/hooks/use-conversation"
 import { useSignupDialog } from "@/hooks/use-signup-dialog"
 import { toast } from "sonner"
@@ -186,15 +187,19 @@ export default function ChatPage() {
           onDeleteChat={deleteChat} // Pass deleteChat function
         />
         
-        {/* Mode Switcher - with updated handler */}
+        {/* Mode Switcher - with updated handler - pass character name */}
         <div className="bg-background/70 backdrop-blur-sm border-b border-border/40 py-1.5 shadow-sm">
           <div className="container max-w-4xl mx-auto px-4">
-            <ChatModeSwitcher mode={chatMode} setMode={handleModeChange} />
+            <ChatModeSwitcher 
+              mode={chatMode} 
+              setMode={handleModeChange}
+              characterName={characterData?.name} 
+            />
           </div>
         </div>
         
-        {/* Messages Area with gradient background - hide when in voice mode */}
-        <div className={`flex-1 overflow-hidden relative bg-gradient-to-b from-background to-background/95 ${chatMode === 'voice' ? 'hidden' : ''}`}>
+        {/* Messages Area with gradient background - hide when in voice or video mode */}
+        <div className={`flex-1 overflow-hidden relative bg-gradient-to-b from-background to-background/95 ${chatMode === 'voice' || chatMode === 'video' ? 'hidden' : ''}`}>
           <div className="absolute inset-0 overflow-y-auto">
             <ChatMessages 
               messages={messages} 
@@ -235,6 +240,18 @@ export default function ChatPage() {
           </div>
         )}
         
+        {/* Video mode area */}
+        {chatMode === 'video' && (
+          <div className="flex-1 overflow-hidden relative">
+            <VideoChat 
+              characterId={conversation?.characterId || ""}
+              characterName={characterData?.name || "AI Assistant"}
+              disabled={loading === true}
+              onModeChange={(newMode: ChatMode) => setChatMode(newMode)}
+            />
+          </div>
+        )}
+        
         {/* Chat Input - only show in text mode */}
         {chatMode === 'text' && (
           <ChatInput 
@@ -265,6 +282,8 @@ export default function ChatPage() {
             mode={chatMode}
             characterId={conversation?.characterId} // Make sure this is passed correctly
             isUnhinged={isUnhinged} // Pass the unhinged state to ChatInput
+            characterName={characterData?.name}
+            characterAvatarUrl={characterData?.imageUrl}
           />
         )}
       </div>

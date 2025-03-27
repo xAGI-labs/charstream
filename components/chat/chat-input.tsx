@@ -10,6 +10,7 @@ import { ChatMode } from "./chat-mode-switcher"
 import { VoiceChat } from "./voice-chat"
 import { VoiceInteraction } from "./voice-interaction"
 import { VoiceInteractionContinuous } from "./voice-interaction-continuous"
+import { VideoChat } from "./video-chat"
 
 interface ChatInputProps {
   onSend: (content: string, isUserMessage?: boolean) => Promise<void>;
@@ -19,6 +20,8 @@ interface ChatInputProps {
   mode: ChatMode;
   characterId?: string;
   isUnhinged?: boolean; // Add isUnhinged prop
+  characterName?: string;
+  characterAvatarUrl?: string | null;
 }
 
 export function ChatInput({ 
@@ -28,7 +31,9 @@ export function ChatInput({
   setIsWaiting,
   mode = "text",
   characterId = "",
-  isUnhinged = false  // Add isUnhinged prop with default value
+  isUnhinged = false,  // Add isUnhinged prop with default value
+  characterName = "AI Assistant",
+  characterAvatarUrl = null
 }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -157,6 +162,19 @@ export function ChatInput({
             onVoiceStateChange={handleVoiceStateChange}
             onCallActiveChange={setCallActive}
             isUnhinged={isUnhinged} // Pass isUnhinged to VoiceChat
+          />
+        </div>
+      )
+    }
+
+    if (mode === "video") {
+      return (
+        <div className="h-full flex-1 flex flex-col relative">
+          <VideoChat 
+            characterId={characterId}
+            disabled={disabled}
+            characterName={characterName || "AI Assistant"}
+            characterAvatarUrl={characterAvatarUrl}
           />
         </div>
       )

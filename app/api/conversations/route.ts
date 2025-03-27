@@ -179,18 +179,31 @@ export async function POST(req: Request) {
           imageUrl = `https://robohash.org/${encodeURIComponent(defaultCharacter.name)}?size=256x256&set=set4`;
         }
         
-        // Create the character with Together-generated avatar
-        character = await prisma.character.create({
-          data: {
-            id: homeCharacter?.id || defaultCharacter.id, // Use the HomeCharacter ID if available
-            name: defaultCharacter.name,
-            description: defaultCharacter.description || null,
-            instructions,
-            imageUrl,
-            isPublic: true,
-            creatorId: systemUser.id
+        // Check if a character with this ID already exists before trying to create it
+        const existingCharacter = await prisma.character.findUnique({
+          where: {
+            id: homeCharacter?.id || defaultCharacter.id
           }
         });
+
+        if (existingCharacter) {
+          // Use the existing character
+          character = existingCharacter;
+          console.log(`Using existing character: ${character.name}`);
+        } else {
+          // Create the character with Together-generated avatar
+          character = await prisma.character.create({
+            data: {
+              id: homeCharacter?.id || defaultCharacter.id, // Use the HomeCharacter ID if available
+              name: defaultCharacter.name,
+              description: defaultCharacter.description || null,
+              instructions,
+              imageUrl,
+              isPublic: true,
+              creatorId: systemUser.id
+            }
+          });
+        }
       } else {
         return new NextResponse("Character not found", { status: 404 })
       }

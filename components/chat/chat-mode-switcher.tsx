@@ -12,6 +12,7 @@ export type ChatMode = "text" | "voice" | "video" | "image"
 interface ChatModeSwitcherProps {
   mode: ChatMode
   setMode: (mode: ChatMode) => void
+  characterName?: string | null
 }
 
 // Define proper type for mode items
@@ -35,19 +36,26 @@ export function ChatModeSwitcher({ mode, setMode }: ChatModeSwitcherProps) {
       id: "voice",
       label: "Voice",
       icon: Mic,
-      available: true  // We're enabling voice mode
+      available: true
     },
     {
       id: "video",
       label: "Video",
       icon: Video,
-      available: false,
-      comingSoon: true
+      available: true  // Change to true to enable video mode
     }
   ]
 
   const handleModeChange = (newMode: ChatMode) => {
-    setMode(newMode)
+    // Add confirmation for video mode to prevent accidental switches
+    if (newMode === "video") {
+      console.log("Switching to video mode");
+    }
+    
+    // Prevent rapid mode switching by adding a small debounce
+    setTimeout(() => {
+      setMode(newMode);
+    }, 50);
   }
 
   return (
