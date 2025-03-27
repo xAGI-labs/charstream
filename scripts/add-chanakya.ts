@@ -6,15 +6,15 @@ const DEFAULT_IMAGE_URL = ""; // Use empty string instead of null
 
 async function main() {
   const character = await prisma.homeCharacter.upsert({
-    where: { id: "chanakya" }, // Use the unique `id` field
+    where: { id: "munnabhai" }, // Use the unique `id` field
     update: {},
     create: {
-      id: "chanakya", // Provide a unique `id` for the new character
-      name: "Chanakya",
-      description: "An ancient Indian teacher, philosopher, economist, and royal advisor.",
+      id: "munnabhai", // Provide a unique `id` for the new character
+      name: "Munna Bhai",
+      description: "Lovable gangster from the movie Munnabhai MBBS who undergoes a transformation",
       imageUrl: "", // Let the system generate the avatar later
       category: "popular",
-      displayOrder: 1, // Adjust the display order as needed
+      displayOrder: 7, // Adjust the display order as needed
     },
   });
 

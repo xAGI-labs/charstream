@@ -200,8 +200,9 @@ function getAvatarPrompt(name: string, description?: string): string {
   Key Ghibli features: round face with small nose and mouth, large expressive eyes with distinct highlights, 
   simple clean linework, soft watercolor-like shading, natural earth-toned color palette, 
   slightly messy but detailed hair with individual strands, minimalist facial features.
+  Make sure you draw the chracter according to the character description provided.
   Character should have the distinctive Miyazaki big-eyed innocent expression, with a 3/4 view,
-  clean white background. The character must look exactly as if drawn by Studio Ghibli animators for an actual film.
+  colorful lush background. The character must look exactly as if drawn by Studio Ghibli animators for an actual film.
   Do not exaggerate anime style. Maintain Ghibli's subdued, naturalistic approach to character design.`;
   
   return prompt;
