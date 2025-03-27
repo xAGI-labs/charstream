@@ -163,7 +163,6 @@ export function VideoChat({
     <div ref={containerRef} className="w-full h-full flex flex-col items-center justify-center bg-black">
       {sessionData.url && (
         <>
-          <p className="text-white mb-2">Room URL: {sessionData.url}</p> {/* Debugging */}
           <iframe
             ref={videoRef}
             src={sessionData.url}
@@ -175,9 +174,6 @@ export function VideoChat({
             onLoad={() => console.log("Iframe loaded successfully")}
             onError={(e) => console.error("Iframe failed to load", e)}
           ></iframe>
-          <p className="text-white mt-2">
-            If the video does not load, <a href={sessionData.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">click here</a> to open it in a new tab.
-          </p>
         </>
       )}
     </div>
