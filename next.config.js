@@ -9,7 +9,8 @@ const nextConfig = {
       'api.together.xyz',
       'api.together.ai',
       'res.cloudinary.com', // Ensure this is present
-      'dht33kdwe.cloudinary.com', // Add this specific Cloudinary subdomain
+      'dht33kdwe.cloudinary.com',
+      'assets.geoarthouse.com', // Add this specific Cloudinary subdomain
     ],
     unoptimized: process.env.NODE_ENV === 'production',
   },
