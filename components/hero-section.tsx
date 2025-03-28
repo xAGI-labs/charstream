@@ -13,9 +13,48 @@ interface Character {
   prompt: string
 }
 
+// Function to generate character-specific prompts
+const generateCharacterPrompt = (name: string, description: string): string => {
+  const keywords = description.toLowerCase();
+
+  if (name.toLowerCase() === "chota bheem") {
+    return `Hi, I'm Chota Bheem! I'm always ready to protect Dholakpur with my strength and courage. What adventure shall we embark on today?`;
+  } else if (name.toLowerCase() === "chanakya") {
+    return `Greetings, I am Chanakya, the master strategist and philosopher. How may I assist you with wisdom and guidance?`;
+  } else if (name.toLowerCase() === "harry potter") {
+    return `Hello, I'm Harry Potter, the Boy Who Lived. Shall we explore the magical world together or face some dark wizards?`;
+  } else if (name.toLowerCase() === "sherlock holmes") {
+    return `Good day, I am Sherlock Holmes, the world's only consulting detective. Do you have a mystery that needs solving?`;
+  } else if (keywords.includes('wizard') || keywords.includes('magic')) {
+    return `Behold, I am ${name}, a wielder of the arcane arts. What enchantment or spell do you seek today?`;
+  } else if (keywords.includes('warrior') || keywords.includes('fighter') || keywords.includes('battle')) {
+    return `I am ${name}, a fearless warrior. My blade thirsts for glory. Shall we march into battle together?`;
+  } else if (keywords.includes('guide') || keywords.includes('helper')) {
+    return `Greetings, traveler! I am ${name}, your trusted guide. Where shall our journey take us?`;
+  } else if (keywords.includes('healer') || keywords.includes('doctor')) {
+    return `I am ${name}, a healer of body and soul. Tell me, where does it hurt?`;
+  } else if (keywords.includes('scholar') || keywords.includes('knowledge')) {
+    return `Salutations! I am ${name}, a seeker of wisdom. What mysteries shall we unravel today?`;
+  } else if (keywords.includes('rogue') || keywords.includes('thief')) {
+    return `*whispers* The name's ${name}. I specialize in... delicate operations. What needs to be done?`;
+  } else {
+    return `Greetings, I am ${name}. What grand adventure shall we embark on today?`;
+  }
+};
+
 export function HeroSection() {
-  const [characters, setCharacters] = useState<Character[]>([])
+  const [characterSets, setCharacterSets] = useState<[Character[], Character[]]>([[], []]);
+  const [displayState, setDisplayState] = useState<0 | 1>(0);
   const router = useRouter()
+
+  // Transition effect - switch between states every 6 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayState((prev) => (prev === 0 ? 1 : 0));
+    }, 6000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchCharacters = async () => {
@@ -25,14 +64,25 @@ export function HeroSection() {
           throw new Error("Failed to fetch characters")
         }
         const data = await response.json()
-        const selectedCharacters = data.slice(0, 2).map((char: any) => ({
+        
+        // Create two sets of characters with personalized prompts
+        const firstSet = data.slice(0, 2).map((char: any) => ({
           id: char.id,
           name: char.name,
-          description: char.description,
+          description: char.description || "",
           imageUrl: char.imageUrl || `https://robohash.org/${encodeURIComponent(char.name)}?size=256x256&set=set4`,
-          prompt: char.prompt || "Hi, looking for me?",
-        }))
-        setCharacters(selectedCharacters)
+          prompt: char.prompt || generateCharacterPrompt(char.name, char.description || ""),
+        }));
+        
+        const secondSet = data.slice(2, 4).map((char: any) => ({
+          id: char.id,
+          name: char.name,
+          description: char.description || "",
+          imageUrl: char.imageUrl || `https://robohash.org/${encodeURIComponent(char.name)}?size=256x256&set=set4`,
+          prompt: char.prompt || generateCharacterPrompt(char.name, char.description || ""),
+        }));
+        
+        setCharacterSets([firstSet, secondSet]);
       } catch (error) {
         console.error("Error fetching characters:", error)
       }
@@ -47,13 +97,20 @@ export function HeroSection() {
 
   return (
     <div className="relative w-full min-h-[400px] text-white mt-10 hidden md:block">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0 rounded-4xl">
+      {/* Background Images with Transition */}
+      <div className="absolute inset-0 z-0 rounded-4xl overflow-hidden">
         <Image
           src="/bg-card.jpg"
           alt="Adventure landscape"
           fill
-          className="object-cover rounded-xl"
+          className={`object-cover rounded-xl transition-transform duration-5000 ${displayState === 0 ? 'scale-110 translate-x-10' : 'scale-100 translate-x-0'} ${displayState === 0 ? 'opacity-100' : 'opacity-0'}`}
+          priority
+        />
+        <Image
+          src="/bg-card2.jpg"
+          alt="Adventure landscape alternate"
+          fill
+          className={`object-cover rounded-xl transition-transform duration-5000 ${displayState === 1 ? 'scale-110 translate-x-10' : 'scale-100 translate-x-0'} ${displayState === 1 ? 'opacity-100' : 'opacity-0'}`}
           priority
         />
       </div>
@@ -68,7 +125,6 @@ export function HeroSection() {
           {/* Refresh button */}
           <button
             className="p-2 rounded-full bg-gray-100/50 hover:bg-gray-50/50 dark:bg-gray-800/50 dark:hover:bg-gray-700/50 transition-colors"
-            onClick={() => window.location.reload()}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -90,10 +146,13 @@ export function HeroSection() {
           </button>
         </div>
 
-        {/* Right Side - Character Cards */}
+        {/* Right Side - Character Cards with Transition */}
         <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {characters.map((character) => (
-            <Card key={character.id} className="bg-gray-100/50 dark:bg-gray-800/80 border-0 text-neutral-900 dark:text-white overflow-hidden">
+          {characterSets[displayState].map((character) => (
+            <Card 
+              key={character.id} 
+              className={`bg-gray-100/50 dark:bg-gray-800/80 border-0 text-neutral-900 dark:text-white overflow-hidden transition-shadow `}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="relative w-12 h-12 rounded-full overflow-hidden">
@@ -112,7 +171,7 @@ export function HeroSection() {
 
                 <button
                   onClick={() => handleReplyClick(character.id, character.prompt)}
-                  className="w-full text-left text-neutral-900 dark:text-white text-sm cursor-pointer hover:underline"
+                  className="w-full text-left dark:bg-neutral-800/60 bg-neutral-200/60 rounded-full p-3 text-neutral-900 dark:text-white text-sm cursor-pointer hover:underline"
                 >
                   Reply...
                 </button>
