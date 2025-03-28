@@ -1,40 +1,28 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { useAuth, useUser, UserButton } from "@clerk/nextjs"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { 
-  PlusCircle, 
-  Search, 
-  ChevronLeft, 
-  ChevronRight,
-  Home,
-  MessageCircle,
-  Star,
-  Settings,
-  LogOut,
-  PlusIcon,
-  Plus
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useSignupDialog } from "@/hooks/use-signup-dialog"
-import { CreateCharacterDialog } from "@/components/create-character-dialog"
-import { ConversationList } from "./conversation-list"
-import { MobileNavigation } from "./mobile-navigation"
-import Image from "next/image"
-import { cn } from "@/lib/utils"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { useState, useEffect, useRef } from "react";
+import { useAuth, useUser, UserButton } from "@clerk/nextjs";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import  ThemeSwitch  from "@/components/theme-switch"
-import { FaCcDiscover, FaFire, FaRegCompass } from "react-icons/fa"
+  PlusCircle,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Settings,
+  Plus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useSignupDialog } from "@/hooks/use-signup-dialog";
+import { CreateCharacterDialog } from "@/components/create-character-dialog";
+import { ConversationList } from "./conversation-list";
+import { MobileNavigation } from "./mobile-navigation";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ThemeSwitch from "@/components/theme-switch";
+import { FaRegCompass } from "react-icons/fa";
 
 interface SidebarProps {
   setIsOpen?: (open: boolean) => void;
@@ -42,96 +30,80 @@ interface SidebarProps {
 }
 
 export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
-  const { isSignedIn } = useAuth()
-  const { user } = useUser()
-  const pathname = usePathname()
-  const { setIsOpen: setSignupOpen } = useSignupDialog()
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const userButtonRef = useRef<HTMLDivElement>(null)
-  
-  // Don't render sidebar on admin routes
-  if (pathname?.startsWith('/admin')) {
-    return null
-  }
-  
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const pathname = usePathname();
+  const { setIsOpen: setSignupOpen } = useSignupDialog();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const userButtonRef = useRef<HTMLDivElement>(null);
+
+  // Check if the sidebar should be rendered
+  const shouldRenderSidebar = !pathname?.startsWith("/admin") && !pathname?.startsWith("/pricing");
+
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    
-    checkIsMobile()
-    
-    window.addEventListener('resize', checkIsMobile)
-    
-    return () => window.removeEventListener('resize', checkIsMobile)
-  }, [])
-  
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
+
   useEffect(() => {
-    const savedCollapsedState = localStorage.getItem('sidebarCollapsed')
+    const savedCollapsedState = localStorage.getItem("sidebarCollapsed");
     if (savedCollapsedState !== null && !isMobile) {
-      setIsCollapsed(JSON.parse(savedCollapsedState))
-      if (onCollapsedChange) {
-        onCollapsedChange(JSON.parse(savedCollapsedState))
-      }
+      const collapsed = JSON.parse(savedCollapsedState);
+      setIsCollapsed(collapsed);
+      onCollapsedChange?.(collapsed);
     }
-  }, [isMobile, onCollapsedChange])
-  
+  }, [isMobile, onCollapsedChange]);
+
   useEffect(() => {
     if (!isMobile) {
-      localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed))
+      localStorage.setItem("sidebarCollapsed", JSON.stringify(isCollapsed));
     }
-  }, [isCollapsed, isMobile])
-  
-  const isChatRoute = pathname?.startsWith('/chat')
-  
+  }, [isCollapsed, isMobile]);
+
   const handleCreateClick = () => {
     if (!isSignedIn) {
-      setSignupOpen?.(true)
-      return
+      setSignupOpen?.(true);
+      return;
     }
-    
-    setIsCreateDialogOpen(true)
-  }
-  
-  const displayName = user?.firstName || user?.username || "Guest"
-  
-  const harryPotterAvatar = `/api/avatar?name=Harry%20Potter&width=20&height=20&cache=true&t=1`
-  const chotaBheemAvatar = `/api/avatar?name=Chota%20Bheem&width=20&height=20&cache=true&t=1`
+    setIsCreateDialogOpen(true);
+  };
 
   const toggleCollapsed = () => {
-    const newCollapsedState = !isCollapsed
-    setIsCollapsed(newCollapsedState)
-    
-    if (onCollapsedChange) {
-      onCollapsedChange(newCollapsedState)
-    }
-    
+    const newCollapsedState = !isCollapsed;
+    setIsCollapsed(newCollapsedState);
+    onCollapsedChange?.(newCollapsedState);
     if (!isMobile) {
-      localStorage.setItem('sidebarCollapsed', JSON.stringify(newCollapsedState))
+      localStorage.setItem("sidebarCollapsed", JSON.stringify(newCollapsedState));
     }
+  };
+
+  if (!shouldRenderSidebar) {
+    return null;
   }
 
   if (isMobile) {
     return (
-      <MobileNavigation 
+      <MobileNavigation
         setSignupOpen={setSignupOpen}
         setCreateDialogOpen={setIsCreateDialogOpen}
         isCreateDialogOpen={isCreateDialogOpen}
         isSignedIn={!!isSignedIn}
-        displayName={displayName}
+        displayName={user?.firstName || user?.username || "Guest"}
       />
-    )
+    );
   }
 
   return (
     <>
-      <aside className={cn(
-        "border-r border-border/40 flex flex-col transition-all duration-300 relative bg-sidebar shadow-sm",
-        "h-screen",
-        isCollapsed ? "w-[68px]" : "w-[240px]"
-      )}>
+      <aside className={cn("border-r flex flex-col transition-all duration-300 relative bg-sidebar shadow-sm", "h-screen", isCollapsed ? "w-[68px]" : "w-[240px]")}>
         <div className="py-5 px-4 flex items-center justify-between border-b border-border/30 relative">
           <Link href="/" className={cn(
             "flex items-center gap-2", 
@@ -246,6 +218,15 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           </div>
         </div>
 
+        <div className="border-t border-border/30 mt-auto">
+          <Link href={"/pricing"}>
+            <Button className="w-fit justify-center gap-3 font-medium rounded-full mt-2 cursor-pointer bg-yellow-300 px-2">  
+              Pricing
+            </Button>
+          </Link>
+        </div>
+
+
         <div className="p-3 border-t border-border/30 mt-auto">
           {isSignedIn ? (
             <div 
@@ -263,7 +244,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                 <div ref={userButtonRef}>
                   <UserButton afterSignOutUrl="/" />
                 </div>
-                {!isCollapsed && <span className="text-sm font-medium">{displayName}</span>}
+                {!isCollapsed && <span className="text-sm font-medium">{user?.firstName || user?.username || "Guest"}</span>}
               </div>
               {!isCollapsed && (
                 <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full cursor-pointer">
@@ -309,5 +290,5 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
         onOpenChange={setIsCreateDialogOpen}
       />
     </>
-  )
+  );
 }
