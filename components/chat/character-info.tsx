@@ -23,7 +23,7 @@ export function CharacterInfo({ name, description, avatarUrl, author }: Characte
       </div>
       <div className="mt-2 text-center">
         <h3 className="text-lg font-medium text-black dark:text-white">{name}</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 md:px-56">{description}</p>
         {author && <p className="text-xs text-gray-700 dark:text-gray-500 mt-1">By {author}</p>}
       </div>
     </div>

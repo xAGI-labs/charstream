@@ -110,7 +110,7 @@ export function HeroSection() {
           src="/bg-card2.jpg"
           alt="Adventure landscape alternate"
           fill
-          className={`object-cover rounded-xl transition-transform duration-5000 ${displayState === 1 ? 'scale-110 translate-x-10' : 'scale-100 translate-x-0'} ${displayState === 1 ? 'opacity-100' : 'opacity-0'}`}
+          className={`object-cover rounded-xl transition-transform text-black duration-5000 ${displayState === 1 ? 'scale-110 translate-x-10' : 'scale-100 translate-x-0'} ${displayState === 1 ? 'opacity-100' : 'opacity-0'}`}
           priority
         />
       </div>
