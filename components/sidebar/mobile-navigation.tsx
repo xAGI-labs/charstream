@@ -60,6 +60,12 @@ export function MobileNavigation({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
   
+  // Close navigation when route changes
+  useEffect(() => {
+    setIsSheetOpen(false)
+    setShowSearch(false)
+  }, [pathname])
+  
   const handleCreateClick = () => {
     if (!isSignedIn) {
       setSignupOpen(true)
@@ -67,6 +73,7 @@ export function MobileNavigation({
     }
     
     setCreateDialogOpen(true)
+    setIsSheetOpen(false) // Close the sheet when opening create dialog
   }
   
   // Check if current route is active
@@ -99,7 +106,7 @@ export function MobileNavigation({
               <div className="flex flex-col h-full">
                 <SheetHeader className="border-b border-border/20 p-4">
                   <div className="flex items-center justify-between">
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link href="/" className="flex items-center space-x-2" onClick={() => setIsSheetOpen(false)}>
                       <Image
                         src="/logo.png"
                         alt="Chatstream Logo"
@@ -120,7 +127,7 @@ export function MobileNavigation({
                 
                 {/* Upgrade to Chatstream+ button */}
                 <div className="px-4 pt-4">
-                  <Link href="/pricing">
+                  <Link href="/pricing" onClick={() => setIsSheetOpen(false)}>
                     <Button 
                       variant="outline" 
                       className="w-full bg-gradient-to-r from-yellow-300 to-yellow-500 hover:from-yellow-600 hover:to-yellow-600 text-black border-none h-11 justify-between group relative overflow-hidden"
@@ -207,21 +214,22 @@ export function MobileNavigation({
                       </div>
                       <div className="space-y-1 px-1">
                         {["Harry Potter", "Chota Bheem"].map((name) => (
-                          <Button 
-                            key={name}
-                            variant="ghost" 
-                            className="w-full justify-start text-sm hover:bg-accent/50"
-                          >
-                            <Avatar className="h-6 w-6 mr-3">
-                              <AvatarImage 
-                                src={`/api/avatar?name=${encodeURIComponent(name)}&width=32&height=32&cache=true&t=1`}
-                                alt={name}
-                              />
-                              <AvatarFallback>{name.substring(0, 2)}</AvatarFallback>
-                            </Avatar>
-                            <span className="truncate">{name}</span>
-                            <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground opacity-60" />
-                          </Button>
+                          <SheetClose asChild key={name}>
+                            <Button 
+                              variant="ghost" 
+                              className="w-full justify-start text-sm hover:bg-accent/50"
+                            >
+                              <Avatar className="h-6 w-6 mr-3">
+                                <AvatarImage 
+                                  src={`/api/avatar?name=${encodeURIComponent(name)}&width=32&height=32&cache=true&t=1`}
+                                  alt={name}
+                                />
+                                <AvatarFallback>{name.substring(0, 2)}</AvatarFallback>
+                              </Avatar>
+                              <span className="truncate">{name}</span>
+                              <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground opacity-60" />
+                            </Button>
+                          </SheetClose>
                         ))}
                       </div>
                     </div>
@@ -244,13 +252,15 @@ export function MobileNavigation({
                       </Button>
                     </div>
                   ) : (
-                    <Button 
-                      className="w-full gap-2"
-                      onClick={() => setSignupOpen(true)}
-                    >
-                      <Users className="h-4 w-4" />
-                      Sign In
-                    </Button>
+                    <SheetClose asChild>
+                      <Button 
+                        className="w-full gap-2"
+                        onClick={() => setSignupOpen(true)}
+                      >
+                        <Users className="h-4 w-4" />
+                        Sign In
+                      </Button>
+                    </SheetClose>
                   )}
                 </div>
               </div>
@@ -283,14 +293,16 @@ export function MobileNavigation({
           
           {isSignedIn ? (
             <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 px-3 rounded-full hidden sm:flex items-center gap-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 text-foreground border-purple-200/50"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                <span>Upgrade</span>
-              </Button>
+              <Link href="/pricing">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-3 rounded-full hidden sm:flex items-center gap-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 text-foreground border-purple-200/50"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                  <span>Upgrade</span>
+                </Button>
+              </Link>
               <UserButton afterSignOutUrl="/" />
             </div>
           ) : (
@@ -345,6 +357,7 @@ export function MobileNavigation({
                   key={name}
                   variant="outline"
                   className="flex flex-col items-center justify-center space-y-2 p-4 h-auto bg-card/50 border-border/30 hover:border-border/50 hover:bg-card/80 rounded-xl transition-all"
+                  onClick={() => setShowSearch(false)}
                 >
                   <Avatar className="h-14 w-14 mb-2">
                     <AvatarImage
@@ -369,6 +382,7 @@ export function MobileNavigation({
                     key={category} 
                     variant="outline" 
                     className="h-8 px-3 py-1 text-xs rounded-full bg-card/50 border-border/30"
+                    onClick={() => setShowSearch(false)}
                   >
                     {category}
                   </Button>
