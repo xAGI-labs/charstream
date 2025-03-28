@@ -22,7 +22,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ThemeSwitch from "@/components/theme-switch";
-import { FaRegCompass } from "react-icons/fa";
+import { FaChevronUp, FaRegCompass } from "react-icons/fa";
 
 interface SidebarProps {
   setIsOpen?: (open: boolean) => void;
@@ -218,10 +218,10 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           </div>
         </div>
 
-        <div className="border-t border-border/30 mt-auto">
+        <div className="border-t border-border/30 mt-auto px-8">
           <Link href={"/pricing"}>
-            <Button className="w-fit justify-center gap-3 font-medium rounded-full mt-2 cursor-pointer bg-yellow-300 px-2">  
-              Pricing
+            <Button className="w-full justify-center gap-3 font-medium rounded-full mt-2 cursor-pointer h-10 text-black bg-yellow-300 hover:bg-yellow-600/80">  
+              upgrade to  <span className="font-bold text- -ml-2 gap-0">charstream+</span>
             </Button>
           </Link>
         </div>
