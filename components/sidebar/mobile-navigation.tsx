@@ -15,7 +15,9 @@ import {
   ArrowLeft,
   Users,
   Star,
-  X
+  X,
+  Sparkles,
+  Compass
 } from "lucide-react"
 import { UserButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
@@ -116,6 +118,23 @@ export function MobileNavigation({
                   </div>
                 </SheetHeader>
                 
+                {/* Upgrade to Chatstream+ button */}
+                <div className="px-4 pt-4">
+                  <Link href="/pricing">
+                    <Button 
+                      variant="outline" 
+                      className="w-full bg-gradient-to-r from-yellow-300 to-yellow-500 hover:from-yellow-600 hover:to-yellow-600 text-black border-none h-11 justify-between group relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0)_25%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0)_75%)] animate-shimmer" />
+                      <div className="flex items-center">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        <span>Upgrade to Chatstream+</span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </Button>
+                  </Link>
+                </div>
+                
                 <div className="flex-1 overflow-y-auto scrollbar-thin">
                   {/* Main navigation items */}
                   <div className="py-4 px-2">
@@ -132,14 +151,15 @@ export function MobileNavigation({
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Button 
-                          variant="ghost" 
-                          className="w-full justify-start text-base"
-                          onClick={() => setShowSearch(!showSearch)}
-                        >
-                          <Search className="mr-3 h-5 w-5" />
-                          Discover
-                        </Button>
+                        <Link href="/discover">
+                          <Button 
+                            variant={isActive('/discover') ? "secondary" : "ghost"} 
+                            className="w-full justify-start text-base"
+                          >
+                            <Compass className="mr-3 h-5 w-5" />
+                            Discover
+                          </Button>
+                        </Link>
                       </SheetClose>
                       <SheetClose asChild>
                         <Button 
@@ -149,6 +169,16 @@ export function MobileNavigation({
                         >
                           <PlusCircle className="mr-3 h-5 w-5" />
                           Create Character
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full justify-start text-base"
+                          onClick={() => setShowSearch(!showSearch)}
+                        >
+                          <Search className="mr-3 h-5 w-5" />
+                          Search
                         </Button>
                       </SheetClose>
                     </div>
@@ -252,7 +282,17 @@ export function MobileNavigation({
           </Button>
           
           {isSignedIn ? (
-            <UserButton afterSignOutUrl="/" />
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 rounded-full hidden sm:flex items-center gap-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 text-foreground border-purple-200/50"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                <span>Upgrade</span>
+              </Button>
+              <UserButton afterSignOutUrl="/" />
+            </div>
           ) : (
             <Button
               variant="default"

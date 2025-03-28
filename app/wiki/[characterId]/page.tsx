@@ -65,7 +65,7 @@ export default async function WikiPage({ params }: WikiPageProps) {
   }
   
   return (
-    <div className="container mx-auto py-6">
+    <div className="w-full max-w-full p-4 md:container mx-auto py-2 sm:py-4 lg:py-6">
       <CharacterWikiContent character={character} />
     </div>
   )

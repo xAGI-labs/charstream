@@ -12,11 +12,11 @@ export function WikiSection({ title, content }: WikiSectionProps) {
   const paragraphs = content.split('\n\n').filter(p => p.trim() !== '')
   
   return (
-    <section className="p-4">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      <div className="space-y-4">
+    <section className="py-4 px-2 md:p-4">
+      <h2 className="text-xl md:text-2xl font-bold mb-2 md:mb-4">{title}</h2>
+      <div className="space-y-3 md:space-y-4">
         {paragraphs.map((paragraph, index) => (
-          <p key={index}>{paragraph}</p>
+          <p key={index} className="text-sm md:text-base">{paragraph}</p>
         ))}
       </div>
     </section>

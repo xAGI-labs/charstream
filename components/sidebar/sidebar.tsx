@@ -22,7 +22,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ThemeSwitch from "@/components/theme-switch";
-import { FaChevronUp, FaRegCompass } from "react-icons/fa";
+import { LuBrainCircuit } from "react-icons/lu";
+import { FaRegCompass } from "react-icons/fa";
 
 interface SidebarProps {
   setIsOpen?: (open: boolean) => void;
@@ -218,14 +219,38 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           </div>
         </div>
 
-        <div className="border-t border-border/30 mt-auto px-8">
-          <Link href={"/pricing"}>
-            <Button className="w-full justify-center gap-3 font-medium rounded-full mt-2 cursor-pointer h-10 text-black bg-yellow-300 hover:bg-yellow-600/80">  
-              upgrade to  <span className="font-bold text- -ml-2 gap-0">charstream+</span>
-            </Button>
-          </Link>
+        <div className={cn(
+          "border-t border-border/30 mt-auto",
+          isCollapsed ? "px-3 flex justify-center py-3" : "px-8"
+        )}>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={"/pricing"} className={cn(
+                  isCollapsed ? "w-9 h-9 flex items-center justify-center" : "w-full"
+                )}>
+                  <Button 
+                    className={cn(
+                      "font-medium rounded-full cursor-pointer text-black bg-yellow-300 hover:bg-yellow-400",
+                      isCollapsed ? 
+                        "h-9 w-9 p-1 animate-pulse" :
+                        "w-full justify-center gap-3 mt-2 h-10"
+                    )}
+                  >  
+                    {isCollapsed ? (
+                      <LuBrainCircuit className="h-4 w-4" />
+                    ) : (
+                      <>upgrade to <span className="font-bold -ml-2">charstream+</span></>
+                    )}
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              {isCollapsed && (
+                <TooltipContent side="right">Upgrade to Charstream+</TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
-
 
         <div className="p-3 border-t border-border/30 mt-auto">
           {isSignedIn ? (

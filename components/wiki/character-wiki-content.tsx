@@ -71,23 +71,23 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
   }, [character.id])
 
   return (
-    <div className="flex flex-col space-y-6 p-4 md:p-10 md:px-14">
+    <div className="flex flex-col space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6 lg:p-10">
       {/* Wiki Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{character.name}</h1>
-          <p className="text-muted-foreground md:pr-44">{character.description}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">{character.name}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:pr-0 md:pr-10 lg:pr-44">{character.description}</p>
         </div>
-        <Button variant="outline" onClick={() => window.history.back()}>
+        <Button variant="outline" onClick={() => window.history.back()} className="self-start sm:self-auto">
           Back
         </Button>
       </div>
       
       <Separator />
       
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-4">
         {/* Sidebar */}
-        <div>
+        <div className="lg:sticky lg:top-4 lg:self-start">
           <Card className="overflow-hidden">
             <div className="aspect-square relative">
               {character.imageUrl ? (
@@ -104,19 +104,18 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
                 </div>
               )}
             </div>
-            <div className="p-4">
-              <h2 className="text-xl font-semibold mb-2">{character.name}</h2>
-              <div className="space-y-2 text-sm">
+            <div className="p-3 sm:p-4">
+              <h2 className="text-lg sm:text-xl font-semibold mb-2">{character.name}</h2>
+              <div className="space-y-2 text-xs sm:text-sm">
                 {isLoading ? (
                   <>
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                    <Skeleton className="h-4 w-4/6" />
+                    <Skeleton className="h-3 sm:h-4 w-full" />
+                    <Skeleton className="h-3 sm:h-4 w-5/6" />
+                    <Skeleton className="h-3 sm:h-4 w-4/6" />
                   </>
                 ) : wikiContent ? (
                   <>
                     <p><strong>Full Name:</strong> {character.name}</p>
-                    <p><strong>Occupation:</strong> {extractOccupation(wikiContent.biography)}</p>
                     <p><strong>Abilities:</strong> {extractMainAbility(wikiContent.abilities)}</p>
                   </>
                 ) : (
@@ -126,7 +125,7 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
             </div>
           </Card>
 
-          <Button variant="secondary" className="w-full mt-4" asChild>
+          <Button variant="secondary" className="w-full mt-3 sm:mt-4" asChild>
             <a href={`/chat/${character.id}`}>Chat with {character.name}</a>
           </Button>
         </div>
@@ -134,28 +133,30 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
         {/* Main Content */}
         <div className="lg:col-span-3">
           {isLoading ? (
-            <div className="space-y-6">
-              <Skeleton className="h-8 w-48" />
+            <div className="space-y-4 sm:space-y-6">
+              <Skeleton className="h-6 sm:h-8 w-36 sm:w-48" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-6 sm:h-8 w-36 sm:w-48" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
             </div>
           ) : wikiContent ? (
             <Tabs defaultValue="overview">
-              <TabsList className="mb-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="biography">Biography</TabsTrigger>
-                <TabsTrigger value="personality">Personality</TabsTrigger>
-                <TabsTrigger value="abilities">Abilities</TabsTrigger>
-                <TabsTrigger value="relationships">Relationships</TabsTrigger>
-                <TabsTrigger value="quotes">Quotes</TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto pb-2">
+                <TabsList className="mb-4 w-fit">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="biography">Biography</TabsTrigger>
+                  <TabsTrigger value="personality">Personality</TabsTrigger>
+                  <TabsTrigger value="abilities">Abilities</TabsTrigger>
+                  <TabsTrigger value="relationships">Relationships</TabsTrigger>
+                  <TabsTrigger value="quotes">Quotes</TabsTrigger>
+                </TabsList>
+              </div>
               
               <TabsContent value="overview">
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <WikiSection title="Biography" content={wikiContent.biography} />
                   <WikiSection title="Appearance" content={wikiContent.appearance} />
                   <WikiSection title="Trivia" content={wikiContent.trivia} />
@@ -163,7 +164,7 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
               </TabsContent>
               
               <TabsContent value="biography">
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <WikiSection title="Background" content={wikiContent.background} />
                   <WikiSection title="Biography" content={wikiContent.biography} />
                   <WikiSection title="Trivia" content={wikiContent.trivia} />
@@ -171,7 +172,7 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
               </TabsContent>
               
               <TabsContent value="personality">
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <WikiSection title="Personality" content={wikiContent.personality} />
                   <WikiSection title="Appearance" content={wikiContent.appearance} />
                 </div>
@@ -186,12 +187,12 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
               </TabsContent>
               
               <TabsContent value="quotes">
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold">Notable Quotes</h2>
+                <div className="space-y-2 sm:space-y-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">Notable Quotes</h2>
                   {wikiContent.quotes.length > 0 ? (
-                    <ul className="space-y-4">
+                    <ul className="space-y-2 sm:space-y-4">
                       {wikiContent.quotes.map((quote, index) => (
-                        <li key={index} className="p-4 bg-muted rounded-md italic">
+                        <li key={index} className="p-3 sm:p-4 bg-muted rounded-md italic text-sm sm:text-base">
                           "{quote}"
                         </li>
                       ))}
@@ -203,10 +204,10 @@ export function CharacterWikiContent({ character }: CharacterWikiContentProps) {
               </TabsContent>
             </Tabs>
           ) : (
-            <div className="flex flex-col items-center justify-center p-12 text-center">
-              <Icons.exclamation className="h-12 w-12 text-muted-foreground mb-4" />
-              <h2 className="text-2xl font-semibold">Wiki Content Not Available</h2>
-              <p className="text-muted-foreground mt-2">
+            <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+              <Icons.exclamation className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+              <h2 className="text-xl sm:text-2xl font-semibold">Wiki Content Not Available</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mt-2">
                 We couldn't load the wiki content for this character.
               </p>
             </div>
