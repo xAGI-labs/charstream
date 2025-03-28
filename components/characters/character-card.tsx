@@ -1,6 +1,7 @@
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
+import { Button } from "../ui/button";
 
 export interface Character {
   id: string;
@@ -102,6 +103,19 @@ export function CharacterCard({ character, onClick, disabled }: CharacterCardPro
           {character.description}
         </p>
       )}
+      <div className="mt-2 flex justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(`/wiki/${character.id}`, '_blank');
+          }}
+        >
+          Wiki
+        </Button>
+      </div>
     </button>
   )
 }

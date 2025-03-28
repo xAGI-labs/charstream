@@ -136,6 +136,30 @@ export function ChatHeader({
       </div>
       
       <div className="flex items-center space-x-2">
+        {/* Wiki button - enable whenever we have at least a character name */}
+        {!loading && character?.name && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              // If we have an ID, use it; otherwise use the character name
+              const wikiParam = character.id 
+                ? character.id 
+                : encodeURIComponent(character.name);
+                
+              const wikiUrl = character.id 
+                ? `/wiki/${wikiParam}`
+                : `/wiki/by-name/${wikiParam}`;
+                
+              window.open(wikiUrl, '_blank');
+            }}
+          >
+            <Info className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Wiki</span>
+          </Button>
+        )}
+        
         {!loading && onUnhingedChange && character && (
           <UnhingedModeToggle 
             isUnhinged={isUnhinged} 
