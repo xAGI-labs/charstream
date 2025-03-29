@@ -11,8 +11,9 @@ export async function GET(
   { params }: { params: { characterId: string } }
 ) {
   try {
-    // Await params before accessing its properties
-    const { characterId } = params;
+    // Properly await params before accessing its properties
+    const resolvedParams = await params;
+    const characterId = resolvedParams.characterId;
     
     if (!characterId) {
       return new NextResponse("Character ID is required", { status: 400 })
