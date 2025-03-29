@@ -105,20 +105,21 @@ export default function WikiPageContent() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-background">
       {/* Wiki Header */}
-      <div className="bg-yellow-300 text-neutral-900 py-4 px-4 sm:px-8 shadow-sm">
+      <header className="bg-yellow-300 text-neutral-900 py-4 px-4 sm:px-8 shadow-sm" aria-label="Character Wiki Header">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center">
-            <BookOpen className="h-6 w-6 mr-2" />
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Character Wiki</h1>
+            <BookOpen className="h-6 w-6 mr-2" aria-hidden="true" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Character Wiki Database</h1>
           </div>
           <div className="w-full max-w-md relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Input
               type="text"
-              placeholder="Search wikis..."
+              placeholder="Search character wikis..."
               className="pl-9 pr-8 h-10 w-full bg-primary-foreground/10 border-neutral-900/20 placeholder:text-primary-neutral-900/60 text-neutral-900"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search character wikis"
             />
             {searchQuery && (
               <Button
@@ -126,18 +127,19 @@ export default function WikiPageContent() {
                 size="sm"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 px-2 text-primary-foreground/70 hover:text-primary-foreground"
                 onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
               >
                 Clear
               </Button>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
+      <main className="flex-1 container max-w-7xl mx-auto px-4 py-6" id="main-content">
         {/* Category Filter */}
-        <div className="mb-6 flex justify-between items-center">
+        <nav className="mb-6 flex justify-between items-center" aria-label="Character categories">
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-auto">
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
@@ -151,8 +153,8 @@ export default function WikiPageContent() {
           <div className="sm:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
+                <Button variant="outline" size="sm" aria-label="Filter characters">
+                  <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
                   Filter
                 </Button>
               </DropdownMenuTrigger>
@@ -172,20 +174,21 @@ export default function WikiPageContent() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
+        </nav>
         
         {isLoading ? (
-          <div className="flex justify-center items-center min-h-[400px] w-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
+          <section className="flex justify-center items-center min-h-[400px] w-full" aria-label="Loading characters">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" aria-label="Loading"></div>
+            <span className="sr-only">Loading characters...</span>
+          </section>
         ) : isSearching ? (
-          <div className="w-full">
+          <section className="w-full" aria-labelledby="search-results-heading">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold" id="search-results-heading">
                 Search Results for "{searchQuery}"
               </h2>
-              <div className="text-sm text-muted-foreground">
-                {filteredCharacters.length} {filteredCharacters.length === 1 ? 'result' : 'results'}
+              <div className="text-sm text-muted-foreground" aria-live="polite">
+                {filteredCharacters.length} {filteredCharacters.length === 1 ? 'character found' : 'characters found'}
               </div>
             </div>
             
@@ -201,24 +204,22 @@ export default function WikiPageContent() {
                 </div>
               </div>
             )}
-          </div>
+          </section>
         ) : (
-          <div className="space-y-8">
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center">
-                  {activeTab === "all" ? "All Character Wikis" : 
-                   activeTab === "popular" ? "Popular Character Wikis" : 
-                   activeTab === "educational" ? "Educational Character Wikis" : 
-                   "Community Character Wikis"}
-                </h2>
-                <div className="text-sm text-muted-foreground">
-                  {getDisplayedCharacters().length} {getDisplayedCharacters().length === 1 ? 'character' : 'characters'}
-                </div>
+          <section className="space-y-8" aria-labelledby="character-list-heading">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center" id="character-list-heading">
+                {activeTab === "all" ? "Complete Character Wiki Database" : 
+                 activeTab === "popular" ? "Popular Character Wikis" : 
+                 activeTab === "educational" ? "Educational Character Wikis" : 
+                 "Community-Created Character Wikis"}
+              </h2>
+              <div className="text-sm text-muted-foreground" aria-live="polite">
+                {getDisplayedCharacters().length} {getDisplayedCharacters().length === 1 ? 'character' : 'characters'}
               </div>
-              <WikiCharacterGrid characters={getDisplayedCharacters()} onCharacterClick={handleCharacterClick} />
-            </section>
-          </div>
+            </div>
+            <WikiCharacterGrid characters={getDisplayedCharacters()} onCharacterClick={handleCharacterClick} />
+          </section>
         )}
       </main>
       
