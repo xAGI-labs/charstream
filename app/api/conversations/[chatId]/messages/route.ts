@@ -91,7 +91,7 @@ export async function POST(
     
     // Generate AI response using our direct helper function
     let aiResponse = "I'm sorry, I couldn't generate a response.";
-    
+
     try {
       // Format recent messages for context
       const recentMessages = conversation.messages
@@ -101,23 +101,13 @@ export async function POST(
           content: m.content
         }));
       
-      // Retrieve memory and include it in the AI response context
-      const memory = await prisma.memory.findMany({
-        where: {
-          userId,
-          characterId: conversation.characterId,
-        },
-        orderBy: { updatedAt: 'desc' },
-      });
-
-      const memoryContent = memory.map((m) => m.content).join('\n');
-
-      // Generate response directly - passing unhinged status
+      // Pass the userId to generateCharacterResponse for memory handling
       aiResponse = await generateCharacterResponse(
-        conversation.characterId, 
-        [...recentMessages, { role: 'system', content: `Memory:\n${memoryContent}` }],
+        conversation.characterId,
+        recentMessages,
         content,
-        isUnhinged
+        false, // not unhinged
+        userId  // Add the userId parameter here
       );
       
       console.log(`Generated response for conversation ${chatId}, unhinged: ${isUnhinged}`);

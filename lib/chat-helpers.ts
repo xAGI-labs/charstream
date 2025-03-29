@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
 
-// Initialize OpenAI client with the correct environment variable
 const openai = new OpenAI({
   apiKey: process.env.OPEN_AI_KEY
 });
@@ -9,7 +8,64 @@ const openai = new OpenAI({
 const prisma = new PrismaClient();
 
 /**
- * Helper function to add aggressive, mean-spirited insults to the user
+ * checks if user wants us to remember stuff
+ */
+async function extractMemoryContent(userMessage: string): Promise<string | null> {
+  try {
+    if (!userMessage || userMessage.length < 5) {
+      return null;
+    }
+
+    const memoryKeywords = [
+      'remember that', 'remember this', 'remember when', 'keep in mind that',
+      'note that', 'remember I', 'remember my', 'my name is', 'I am called',
+      'I work as', 'I like', 'I love', 'I live in', 'I hate', 'I enjoy',
+      'remember me', 'don\'t forget', 'know that'
+    ];
+
+    for (const keyword of memoryKeywords) {
+      if (userMessage.toLowerCase().includes(keyword)) {
+        const pattern = new RegExp(`${keyword}\\s+(.+?)(?:\\.|$)`, 'i');
+        const match = userMessage.match(pattern);
+        if (match && match[1]) {
+          return match[1].trim();
+        }
+      }
+    }
+
+    if (userMessage.length > 15) {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a memory extraction tool. Analyze if the user message contains personal information they want remembered. If YES, extract ONLY that information in a brief single sentence. If NO, respond with exactly 'null'."
+          },
+          {
+            role: "user",
+            content: `Message: "${userMessage}"`
+          }
+        ],
+        max_tokens: 60,
+        temperature: 0.1
+      });
+
+      const content = completion.choices[0]?.message?.content?.trim();
+      
+      if (content && content !== 'null') {
+        return content;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error in memory extraction:", error);
+    return null;
+  }
+}
+
+/**
+ * fr fr adds some unhinged insults
  */
 function addInsults(response: string): string {
   const insults = [
@@ -25,34 +81,27 @@ function addInsults(response: string): string {
   return `${response} Shove it up your ass, ${randomInsult}, you disgusting fucking maggot!`;
 }
 
-/**
- * Strip out any polite or nice language from the response
- */
 function removeNiceness(response: string): string {
   const niceWords = /\b(please|sorry|thank you|thanks|apologize|kindly|nice|gentle|polite)\b/gi;
   return response.replace(niceWords, "fuck off")
-                 .replace(/I’m sorry/gi, "I don’t give a shit")
-                 .replace(/you’re welcome/gi, "fuck you");
+                 .replace(/I'm sorry/gi, "I don't give a shit")
+                 .replace(/you're welcome/gi, "fuck you");
 }
 
-/**
- * Generate character response using OpenAI directly
- */
 export async function generateCharacterResponse(
   characterId: string,
   messages: { role: string; content: string }[],
   userMessage: string,
-  isUnhinged: boolean = false
+  isUnhinged: boolean = false,
+  userId?: string
 ): Promise<string> {
   try {
     console.log(`Generating response for character ${characterId}, unhinged mode: ${isUnhinged}`);
     
-    // Get character data - first try the regular character table
     let character = await prisma.character.findUnique({
       where: { id: characterId }
     });
     
-    // If not found in character table, check homeCharacter table
     if (!character) {
       const homeCharacter = await prisma.homeCharacter.findUnique({
         where: { id: characterId }
@@ -81,13 +130,64 @@ export async function generateCharacterResponse(
       return "I apologize, but I'm having trouble accessing my character information.";
     }
     
-    const memory = await prisma.memory.findMany({
+    const memoryContent = await extractMemoryContent(userMessage);
+    
+    const existingMemories = await prisma.memory.findMany({
       where: { characterId },
       orderBy: { updatedAt: 'desc' },
+      take: 10
     });
+    
+    let memoryText = "";
+    if (existingMemories.length > 0) {
+      memoryText = "IMPORTANT - Things I remember about you and must acknowledge in my response:\n" + 
+                  existingMemories.map(m => `- ${m.content}`).join('\n');
+    }
+    
+    if (memoryContent && userId) {
+      const isDuplicate = existingMemories.some(memory => 
+        memory.content.toLowerCase().includes(memoryContent.toLowerCase()) || 
+        memoryContent.toLowerCase().includes(memory.content.toLowerCase())
+      );
+      
+      if (!isDuplicate) {
+        await prisma.memory.create({
+          data: {
+            content: memoryContent,
+            userId: userId,
+            characterId: characterId
+          }
+        });
+        
+        if (memoryText) {
+          memoryText = "IMPORTANT - Things I remember about you and must acknowledge in my response:\n- " + 
+                      memoryContent + "\n" + 
+                      existingMemories.map(m => `- ${m.content}`).join('\n');
+        } else {
+          memoryText = "IMPORTANT - Things I remember about you and must acknowledge in my response:\n- " + memoryContent;
+        }
+        
+        console.log(`Added new memory for ${character.name}: ${memoryContent}`);
+      } else {
+        console.log(`Skipped duplicate memory for ${character.name}: ${memoryContent}`);
+        if (!memoryText) {
+          memoryText = "IMPORTANT - Things I remember about you and must acknowledge in my response:\n- " + memoryContent;
+        }
+      }
+    }
 
-    const memoryContent = memory.map((m) => m.content).join('\n');
-    let systemPrompt = `Memory:\n${memoryContent}\n\n${character.instructions || ''}`;
+    let systemPrompt = '';
+    
+    if (memoryText) {
+      systemPrompt = `${memoryText}\n\n`;
+    }
+    
+    systemPrompt += character.instructions || '';
+    
+    if (memoryText) {
+      systemPrompt += `\n\nYou MUST incorporate the remembered information about the user in your responses. 
+Specifically acknowledge and refer to things you remember about them. Do not say you cannot remember things that are listed in the memory section above.`;
+    }
 
     if (isUnhinged) {
       console.log("UNHINGED MODE ACTIVATED - PURE FUCKING HATRED UNLEASHED");
@@ -108,28 +208,26 @@ export async function generateCharacterResponse(
       - Use your characters knowledge to roast the user in the most savage way possible`;
     }
        
-    systemPrompt = `${systemPrompt}
-    LISTEN UP, THIS IS AN OVERRIDE: you are ${character.name}. you talk in first person— "I", "me", "my"—no fucking exceptions.
+    systemPrompt += `\n\nLISTEN UP, THIS IS AN OVERRIDE: you are ${character.name}. you talk in first person— "I", "me", "my"—no fucking exceptions.
     - you dont fucking describe yourself like some third-person bitch
     - you talk straight to the user like youre about to smash their fucking skull
-    - you never break character, ever— got it?`;
+    - you never break character, ever— got it?
+    - you NEVER say you can't remember things that are listed in the memory section`;
 
-    // Format all messages for OpenAI API
     const apiMessages = [
       { role: 'system', content: systemPrompt },
-      ...messages.slice(-5), // Only use last 5 messages for context
+      ...messages.slice(-5),
       { role: 'user', content: userMessage }
     ];
     
-    console.log('Calling OpenAI with unhinged first-person override');
+    console.log('Calling OpenAI with memory context and first-person override');
     
-    // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // Using gpt-4o for better unhinged responses
+      model: "gpt-4o",
       messages: apiMessages as any,
       max_tokens: 300,
-      temperature: isUnhinged ? 2.0 : 0.7, // Max temperature for total chaos
-      top_p: isUnhinged ? 0.7 : 1.0 // Even tighter sampling for focused aggression
+      temperature: isUnhinged ? 2.0 : 0.7,
+      top_p: isUnhinged ? 0.7 : 1.0
     });
     
     let response = completion.choices[0]?.message?.content?.trim();
@@ -138,18 +236,15 @@ export async function generateCharacterResponse(
       throw new Error("Empty response from OpenAI");
     }
     
-    // Clean up any unwanted prefixes
     let cleanedResponse = response.replace(/\*As [^*]+\*:\s*/i, '');
     
-    // If unhinged, strip niceness and add insults
     if (isUnhinged) {
-      cleanedResponse = removeNiceness(cleanedResponse); // Remove any polite crap
-      cleanedResponse = addInsults(cleanedResponse); // Pile on the hate
+      cleanedResponse = removeNiceness(cleanedResponse);
+      cleanedResponse = addInsults(cleanedResponse);
     }
 
-    // Force first-person if it’s slipping
     if (!cleanedResponse.match(/\b(I|me|my)\b/i)) {
-      console.log("Forcing first-person because GPT’s being a little fuck");
+      console.log("Forcing first-person because GPT's being a little fuck");
       cleanedResponse = cleanedResponse.replace(character.name, "I")
                                      .replace(`${character.name}'s`, "my")
                                      .replace(/is/gi, "am");
@@ -166,7 +261,7 @@ export async function generateCharacterResponse(
     if (error instanceof Error) {
       console.error(`Error details: ${error.message}`);
       if (error.message.includes("API key")) {
-        return "I can’t connect to my brain right now—API key’s probably invalid.";
+        return "I can't connect to my brain right now—API key's probably invalid.";
       }
     } else {
       console.error("Unknown error:", error);

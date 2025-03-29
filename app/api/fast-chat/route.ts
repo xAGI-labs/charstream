@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       messages,
       systemPrompt,
       stream: true,
-      model: 'gpt-3.5-turbo', // Use the faster model
+      model: "gpt-4-turbo",
     });
   } catch (error) {
     console.error("[FAST_CHAT_POST]", error);
