@@ -196,14 +196,12 @@ function getAvatarPrompt(name: string, description?: string): string {
     prompt += `, who is ${description}`;
   }
   
-  prompt += `. Exact Studio Ghibli animation style identical to characters from Spirited Away, Howl's Moving Castle, and My Neighbor Totoro. 
-  Key Ghibli features: round face with small nose and mouth, large expressive eyes with distinct highlights, 
-  simple clean linework, soft watercolor-like shading, natural earth-toned color palette, 
-  slightly messy but detailed hair with individual strands, minimalist facial features.
-  Make sure you draw the chracter according to the character description provided.
-  Character should have the distinctive Miyazaki big-eyed innocent expression, with a 3/4 view,
-  colorful lush background. The character must look exactly as if drawn by Studio Ghibli animators for an actual film.
-  Do not exaggerate anime style. Maintain Ghibli's subdued, naturalistic approach to character design.`;
+  prompt += `Studio Ghibli animation style, matching the naturalistic and grounded aesthetic of films like My Neighbor Totoro and Kikis Delivery Service. 
+  Key Ghibli features: round face with a small nose and mouth, large expressive eyes with subtle highlights, clean and simple linework, soft watercolor-like shading, 
+  and a natural earth-toned color palette. Hair should be slightly messy yet detailed with individual strands, and facial features should remain minimalist. 
+  The character must have a gentle, innocent Miyazaki-style expression, shown in a 3/4 view. Draw the character exactly as described in the provided character description, 
+  ensuring they look like they were designed by Studio Ghibli animators for an actual film. Background should be colorful, lush, and detailed, reflecting a practical yet whimsical setting
+  (e.g., a small-town scene or something you see fit according to their description). Avoid exaggerated anime tropes; maintain Ghibli’s subdued, heartfelt, and naturalistic approach to character design.`;
   
   return prompt;
 }
