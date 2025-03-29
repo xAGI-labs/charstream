@@ -35,6 +35,22 @@ export function CreateCharacterDialog({ open, onOpenChange }: CreateCharacterDia
   const [isLoading, setIsLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState<string>("")
   
+  // Function to trigger wiki generation in the background
+  const triggerBackgroundWikiGeneration = async (characterId: string) => {
+    try {
+      // Fire and forget request to generate wiki content
+      await fetch(`/api/wiki/${characterId}`, { 
+        cache: 'no-store',
+        // Using a signal with a timeout to avoid blocking if the request takes too long
+        signal: AbortSignal.timeout(10000) 
+      })
+      console.log("Background wiki generation initiated")
+    } catch (error) {
+      // We silently fail here as this is a background task
+      console.error("Background wiki generation error:", error)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -89,6 +105,13 @@ export function CreateCharacterDialog({ open, onOpenChange }: CreateCharacterDia
       
       // Redirect to the chat page
       router.push(`/chat/${convData.id}`)
+      
+      // Trigger background wiki generation after a delay to ensure
+      // the navigation has completed and user experience is not affected
+      setTimeout(() => {
+        triggerBackgroundWikiGeneration(data.id)
+      }, 2000)
+      
     } catch (error: any) {
       console.error("Error creating character:", error)
       toast.error("Error creating character", {

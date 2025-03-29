@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { generateWikiContent } from "@/lib/wiki-generator"
 import { WikiContent } from "@/types/wiki"
 
-// Cache wiki content for 24 hours
+// Cache wiki content for 24 hours but allow immediate generation for new characters
 export const revalidate = 86400
 
 export async function GET(
@@ -12,8 +12,7 @@ export async function GET(
 ) {
   try {
     // Await params before accessing its properties
-    const resolvedParams = await params;
-    const { characterId } = resolvedParams;
+    const { characterId } = params;
     
     if (!characterId) {
       return new NextResponse("Character ID is required", { status: 400 })
@@ -49,7 +48,7 @@ export async function GET(
           name: homeCharacter.name,
           description: homeCharacter.description,
           imageUrl: homeCharacter.imageUrl,
-          instructions: `You are ${homeCharacter.name}. ${homeCharacter.description || ''}`, // Fixed: provide a string instead of nullg,
+          instructions: `You are ${homeCharacter.name}. ${homeCharacter.description || ''}`,
           isPublic: true,
           creatorId: 'system',
           createdAt: homeCharacter.createdAt,
@@ -60,11 +59,6 @@ export async function GET(
       }
     }
     
-    // Add null check before using character
-    if (!character) {
-      return new NextResponse("Character not found", { status: 404 })
-    }
-    
     // Generate wiki content using OpenAI
     const wikiContent = await generateWikiContent(
       character.name,
@@ -72,7 +66,7 @@ export async function GET(
       character.instructions || ''
     )
     
-    // Cache the wiki content in the database
+    // Cache the wiki content in the database using upsert to handle race conditions
     await prisma.wikiContent.upsert({
       where: { characterId },
       update: { 
