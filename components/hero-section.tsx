@@ -45,6 +45,8 @@ const generateCharacterPrompt = (name: string, description: string): string => {
 export function HeroSection() {
   const [characterSets, setCharacterSets] = useState<[Character[], Character[]]>([[], []]);
   const [displayState, setDisplayState] = useState<0 | 1>(0);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
   const router = useRouter()
 
   // Transition effect - switch between states every 6 seconds
@@ -91,8 +93,34 @@ export function HeroSection() {
     fetchCharacters()
   }, [])
 
-  const handleReplyClick = (characterId: string, prompt: string) => {
-    router.push(`/chat/${characterId}?prompt=${encodeURIComponent(prompt)}`)
+  const handleReplyClick = async (characterId: string, prompt: string) => {
+    try {
+      setIsLoading(characterId);
+      
+      // Create a conversation first
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          characterId,
+          initialMessage: prompt
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create conversation");
+      }
+
+      const data = await response.json();
+      
+      // Now navigate to the newly created conversation
+      router.push(`/chat/${data.id}`);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      // Handle error state if needed
+    } finally {
+      setIsLoading(null);
+    }
   }
 
   return (
