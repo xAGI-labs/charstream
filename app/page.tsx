@@ -12,6 +12,7 @@ import { CreateCharacterSection } from "@/components/create-character-section"
 import { preloadDefaultAvatars } from "@/lib/preload-avatars"
 import { CharacterCards } from "@/components/character-cards"
 import CharacterFooter from "@/components/FooterBar"
+import { GhiblifyAdSection } from "@/components/ghiblify-ad-section"
 
 export default function Home() {
   const { isOpen, setIsOpen } = useSignupDialog()
@@ -50,6 +51,9 @@ export default function Home() {
           <section>
             <CharacterCards/>
           </section>
+
+          <GhiblifyAdSection />
+
           <section className="py-12">
             <CharacterSection title="Popular Characters" category="popular" />
           </section>
