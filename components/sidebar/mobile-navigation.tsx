@@ -17,7 +17,8 @@ import {
   Star,
   X,
   Sparkles,
-  Compass
+  Compass,
+  Book
 } from "lucide-react"
 import { UserButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
@@ -187,6 +188,17 @@ export function MobileNavigation({
                           <Search className="mr-3 h-5 w-5" />
                           Search
                         </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link href="/wiki">
+                          <Button 
+                            variant="ghost" 
+                            className="w-full justify-start text-base"
+                          >
+                            <Book className="mr-3 h-5 w-5" />
+                            Wiki
+                          </Button>
+                        </Link>
                       </SheetClose>
                     </div>
                     

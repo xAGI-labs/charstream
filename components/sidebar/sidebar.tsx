@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Settings,
   Plus,
+  Book,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,6 +182,25 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                   </TooltipTrigger>
                   {isCollapsed && (
                     <TooltipContent side="right">Discover</TooltipContent>
+                  )}
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/wiki">
+                      <Button
+                        className={cn(
+                          "w-full justify-start bg-white text-black gap-3 font-medium rounded-full hover:bg-neutral-300 mt-2 cursor-pointer",
+                          isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-10"
+                        )}
+                      >
+                        <Book className="h-4 w-4" />
+                        {!isCollapsed && <span>Wiki</span>}
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">Wiki</TooltipContent>
                   )}
                 </Tooltip>
               </div>
