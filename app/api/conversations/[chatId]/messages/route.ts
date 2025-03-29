@@ -6,7 +6,6 @@ import { generateCharacterResponse } from "@/lib/chat-helpers"
 
 const prisma = new PrismaClient()
 
-// Type for the context parameter with generic params
 type RouteContext<T> = { params: T }
 
 export async function POST(
@@ -14,7 +13,6 @@ export async function POST(
   context: { params: { chatId: string } }
 ) {
   try {
-    // Fix: Await the params before accessing chatId
     const params = await context.params
     const chatId = params.chatId
     
@@ -27,19 +25,18 @@ export async function POST(
     const userId = user.id
     
     const body = await req.json()
-    // Explicitly log the full body to debug
     console.log("Request body:", body);
 
     const { content, isUnhinged = false } = body
     
-    // Add debugging to explicitly see if isUnhinged is received
+    // checking the vibe ✨
     console.log(`Received message for chat ${chatId} with unhinged mode: ${isUnhinged}, type: ${typeof isUnhinged}`)
     
     if (!content || typeof content !== "string" || content.trim() === "") {
       return new NextResponse("Message content is required", { status: 400 })
     }
     
-    // Verify conversation exists and belongs to user - INCLUDE CHARACTER DATA
+    // grabbing convo + character data + recent msgs
     const conversation = await prisma.conversation.findUnique({
       where: {
         id: chatId,
@@ -51,7 +48,7 @@ export async function POST(
           orderBy: {
             createdAt: 'asc'
           },
-          take: 50 // Limit for context
+          take: 50 // limit for context
         }
       }
     })
@@ -60,7 +57,7 @@ export async function POST(
       return new NextResponse("Conversation not found", { status: 404 })
     }
     
-    // If character is missing, try to fetch it separately
+    // backup plan if character went MIA
     if (!conversation.character && conversation.characterId) {
       console.log(`Character missing in messages route, fetching separately: ${conversation.characterId}`)
       
@@ -80,7 +77,7 @@ export async function POST(
       }
     }
     
-    // Create user message
+    // save user's message
     const userMessage = await prisma.message.create({
       data: {
         content,
@@ -89,11 +86,10 @@ export async function POST(
       }
     })
     
-    // Generate AI response using our direct helper function
     let aiResponse = "I'm sorry, I couldn't generate a response.";
     
     try {
-      // Format recent messages for context
+      // grab recent msgs for the tea ☕
       const recentMessages = conversation.messages
         .slice(-5)
         .map(m => ({
@@ -101,12 +97,24 @@ export async function POST(
           content: m.content
         }));
       
-      // Generate response directly - passing unhinged status
+      // get the memory receipts 🧠
+      const memory = await prisma.memory.findMany({
+        where: {
+          userId,
+          characterId: conversation.characterId,
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      const memoryContent = memory.map((m) => m.content).join('\n');
+
+      // time to cook up a response 👨‍🍳
       aiResponse = await generateCharacterResponse(
         conversation.characterId, 
-        recentMessages,
+        [...recentMessages, { role: 'system', content: `Memory:\n${memoryContent}` }],
         content,
-        isUnhinged
+        isUnhinged,
+        userId
       );
       
       console.log(`Generated response for conversation ${chatId}, unhinged: ${isUnhinged}`);
@@ -115,7 +123,7 @@ export async function POST(
       aiResponse = `I apologize, but I'm having temporary technical difficulties. Please try again in a moment.`;
     }
     
-    // Create AI message
+    // save AI's comeback
     const aiMessage = await prisma.message.create({
       data: {
         content: aiResponse,
@@ -124,7 +132,7 @@ export async function POST(
       }
     });
     
-    // Update conversation timestamp
+    // bump the convo timestamp
     await prisma.conversation.update({
       where: { id: chatId },
       data: { updatedAt: new Date() }
@@ -135,7 +143,11 @@ export async function POST(
       aiMessage
     });
   } catch (error) {
-    console.error("[MESSAGES_POST]", error);
+    if (error instanceof Error) {
+      console.error("[MESSAGES_POST]", error.message);
+    } else {
+      console.error("[MESSAGES_POST] Unknown error:", error);
+    }
     return new NextResponse("Internal error", { status: 500 });
   }
 }

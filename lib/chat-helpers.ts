@@ -36,13 +36,59 @@ function removeNiceness(response: string): string {
 }
 
 /**
+ * Detects if a user message contains information to remember
+ * Returns the extracted memory content or null if nothing to remember
+ */
+async function extractMemoryContent(userMessage: string): Promise<string | null> {
+  try {
+    // Skip processing if the message clearly doesn't contain a request to remember
+    if (!userMessage.toLowerCase().includes("remember") && 
+        !userMessage.toLowerCase().includes("don't forget") &&
+        !userMessage.toLowerCase().includes("note that") &&
+        !userMessage.toLowerCase().includes("keep in mind")) {
+      return null;
+    }
+    
+    const memoryPrompt = `
+      The user said: "${userMessage}"
+      Does this message contain specific information the user wants you to remember about them? 
+      If yes, extract ONLY the specific detail to remember in a concise format.
+      If no, respond with "NO_MEMORY_FOUND".
+      Keep the response brief and focused only on extractable personal information.
+    `;
+    
+    const memoryCheck = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: 'system', content: 'Extract memory information or respond with NO_MEMORY_FOUND' },
+        { role: 'user', content: memoryPrompt }
+      ],
+      max_tokens: 60,
+      temperature: 0.3
+    });
+    
+    const potentialMemory = memoryCheck.choices[0]?.message?.content?.trim();
+    
+    if (potentialMemory && potentialMemory !== "NO_MEMORY_FOUND") {
+      return potentialMemory;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error extracting memory:", error);
+    return null;
+  }
+}
+
+/**
  * Generate character response using OpenAI directly
  */
 export async function generateCharacterResponse(
   characterId: string,
   messages: { role: string; content: string }[],
   userMessage: string,
-  isUnhinged: boolean = false
+  isUnhinged: boolean = false,
+  userId?: string
 ): Promise<string> {
   try {
     console.log(`Generating response for character ${characterId}, unhinged mode: ${isUnhinged}`);
@@ -81,13 +127,32 @@ export async function generateCharacterResponse(
       return "I apologize, but I'm having trouble accessing my character information.";
     }
     
-    // Build system prompt with character information and strong first-person enforcement
-    let systemPrompt = character.instructions || 
-      `You are ${character.name}. ${character.description || ''}. 
-       Respond in the style of ${character.name} and try not to break character. DO NOT make responses monotonous. 
-       Use any additional info/description you know about the character to give responses.
-       In addition to ${character.name}'s personality, you can also use the character's knowledge and experiences to inform your responses and real-world knowledge.
-       Keep responses concise and engaging, and make it sound like ${character.name} is talking to the user directly.`;
+    // Process memory before generating response
+    const memoryContent = await extractMemoryContent(userMessage);
+    
+    // Fetch all existing memories for this character
+    const existingMemories = await prisma.memory.findMany({
+      where: { characterId },
+      orderBy: { updatedAt: 'desc' },
+    });
+    
+    let memoryText = existingMemories.map(m => m.content).join('\n');
+    
+    // Store new memory if detected
+    if (memoryContent && userId) {
+      await prisma.memory.create({
+        data: {
+          content: memoryContent,
+          userId: userId,
+          characterId: characterId
+        }
+      });
+      
+      // Add new memory to the current context
+      memoryText = `${memoryContent}\n${memoryText}`;
+    }
+
+    let systemPrompt = `Memory:\n${memoryText}\n\n${character.instructions || ''}`;
 
     if (isUnhinged) {
       console.log("UNHINGED MODE ACTIVATED - PURE FUCKING HATRED UNLEASHED");
@@ -162,13 +227,15 @@ export async function generateCharacterResponse(
     return cleanedResponse;
     
   } catch (error) {
-    console.error("Error generating character response:", error);
+    console.error("Error generating character response:");
     if (error instanceof Error) {
       console.error(`Error details: ${error.message}`);
       if (error.message.includes("API key")) {
-        return "I can’t fucking connect to my brain right now—API key’s probably fucked.";
+        return "I can’t connect to my brain right now—API key’s probably invalid.";
       }
+    } else {
+      console.error("Unknown error:", error);
     }
-    return `Shit, I fucked up. Try that again, you goddamn asshole!`;
+    return "I encountered an unexpected issue. Please try again.";
   }
 }

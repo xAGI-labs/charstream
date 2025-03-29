@@ -24,6 +24,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   characters    Character[]    // Characters created by this user
   conversations Conversation[] // Conversations this user has participated in
+  memories      Memory[]       // Memories associated with this user
 }
 
 // Character model - represents AI characters
@@ -39,6 +40,7 @@ model Character {
   creatorId     String
   conversations Conversation[] // Conversations this character is involved in
   isPublic      Boolean        @default(false) // Whether other users can interact with this character
+  memories      Memory[]       // Memories associated with this character
 }
 
 // HomeCharacter model - represents pre-generated characters for the homepage
@@ -88,4 +90,16 @@ model WikiContent {
   content     String   @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
+}
+
+model Memory {
+  id          String   @id @default(cuid())
+  userId      String
+  characterId String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  User       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Character  Character  @relation(fields: [characterId], references: [id], onDelete: Cascade)
 }

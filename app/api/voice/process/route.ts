@@ -9,16 +9,13 @@ import os from 'os';
 
 const prisma = new PrismaClient();
 
-// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPEN_AI_KEY
 });
 
-// This cache will store recent request hashes to detect duplicates
 const recentRequests = new Map<string, { timestamp: number, processing: boolean }>();
 const DUPLICATE_WINDOW_MS = 3000; // 3 seconds window to detect duplicates
 
-// Clean up old requests periodically
 setInterval(() => {
   const now = Date.now();
   for (const [key, value] of recentRequests.entries()) {
@@ -32,16 +29,12 @@ export async function POST(req: Request) {
   console.log("Voice processing request received");
   
   try {
-    // Clone the request to read it twice
     const clonedReq = req.clone();
     
-    // Generate a request ID based on the current time + random suffix
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
     
-    // Read the form data
     const formData = await req.formData();
     
-    // Authentication check
     const { userId } = await auth();
     
     if (!userId) {
@@ -51,7 +44,6 @@ export async function POST(req: Request) {
     
     console.log("Authorized user:", userId);
     
-    // Get the audio file from the form data
     const audioFile = formData.get("audio_file") as File;
     const characterId = formData.get("character_id") as string;
     const isUnhinged = formData.get('is_unhinged') === 'true';
@@ -68,23 +60,19 @@ export async function POST(req: Request) {
     
     console.log(`Processing for character: ${characterId}, Audio file type: ${audioFile.type}, size: ${audioFile.size} bytes`);
     
-    // Generate a simple content hash based on file size and first few bytes
-    // This helps identify identical audio files
     const arrayBuffer = await audioFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const audioSize = buffer.byteLength;
     const audioBytes = new Uint8Array(buffer.slice(0, Math.min(100, audioSize)));
     
-    // Create a hash of the first few bytes + size to identify duplicate requests
+    // make a hash of the first few bytes + size to identify duplicate requests
     const contentHash = `${characterId}_${audioSize}_${Array.from(audioBytes).slice(0, 20).join('')}`;
     
     console.log(`Request ID: ${requestId}, Content hash: ${contentHash.substring(0, 20)}...`);
     
-    // Check if we've seen this exact request recently
     if (recentRequests.has(contentHash)) {
       const existing = recentRequests.get(contentHash)!;
       
-      // If the request is still being processed, return immediately to prevent duplication
       if (existing.processing && Date.now() - existing.timestamp < DUPLICATE_WINDOW_MS) {
         console.log(`⚠️ Duplicate request detected within ${DUPLICATE_WINDOW_MS}ms window! Skipping processing.`);
         return new Response(JSON.stringify({ 
@@ -94,13 +82,11 @@ export async function POST(req: Request) {
       }
     }
     
-    // Mark this request as being processed
     recentRequests.set(contentHash, { 
       timestamp: Date.now(),
       processing: true 
     });
     
-    // Get character from database
     const character = await prisma.character.findUnique({
       where: { id: characterId }
     });
@@ -112,12 +98,10 @@ export async function POST(req: Request) {
     
     console.log(`Character found: ${character.name}`);
     
-    // Save buffer to a temporary file (Node.js way to handle files for APIs)
     const tempFilePath = path.join(os.tmpdir(), `audio-${Date.now()}.webm`);
     await writeFile(tempFilePath, buffer);
     console.log(`Saved audio to temporary file: ${tempFilePath}`);
     
-    // Step 1: Transcribe audio using Whisper
     console.log("Transcribing audio with Whisper API...");
     
     const transcription = await openai.audio.transcriptions.create({
@@ -136,7 +120,6 @@ export async function POST(req: Request) {
       );
     }
     
-    // Create a conversation if not exists
     let conversation = await prisma.conversation.findFirst({
       where: {
         userId: userId,
@@ -155,25 +138,23 @@ export async function POST(req: Request) {
       });
     }
     
-    // Create user message in database right after transcription
     const userMessage = await prisma.message.create({
       data: {
-        content: userText || "Empty message", // Fallback for null content
+        content: userText || "Empty message", // fallback for null content
         role: "user",
         conversationId: conversation.id
       }
     });
     
-    // Step 2: Generate AI response
+    console.log(`User message created with ID: ${userMessage.id}`);    
     console.log(`Generating response from ${character.name}`);
     
-    // Use character instructions as system prompt
     let systemPrompt = character.instructions || 
       `You are ${character.name}. ${character.description || ''}. 
        Respond in the style of ${character.name} and stay in character.
        Keep responses concise and engaging.`;
     
-    // Add unhinged mode modifiers if active
+    // add unhinged mode modifiers if active
     if (isUnhinged) {
       systemPrompt += `
       SPECIAL MODE ACTIVATED: You are now in UNHINGED MODE.
@@ -186,7 +167,6 @@ export async function POST(req: Request) {
       - Remember to stay in character, but show a more extreme side of your personality`;
     }
     
-    // Add first-person enforcement
     systemPrompt += `
     IMPORTANT: You MUST respond as if you ARE ${character.name} using first-person perspective.
     - Use "I", "me", and "my" when referring to yourself
@@ -214,7 +194,6 @@ export async function POST(req: Request) {
       );
     }
     
-    // Create AI message in database as soon as text is available
     const aiMessage = await prisma.message.create({
       data: {
         content: aiTextResponse || "No response", // Fallback for null content
@@ -223,7 +202,6 @@ export async function POST(req: Request) {
       }
     });
     
-    // Step 3: Convert response to speech
     console.log("Converting to speech with TTS API...");
     const speechResponse = await openai.audio.speech.create({
       model: "tts-1",
@@ -231,7 +209,6 @@ export async function POST(req: Request) {
       input: aiTextResponse
     });
     
-    // Convert audio buffer to base64
     const speechArrayBuffer = await speechResponse.arrayBuffer();
     console.log(`Speech response received, size: ${speechArrayBuffer.byteLength} bytes`);
     
@@ -240,7 +217,6 @@ export async function POST(req: Request) {
     
     console.log("Creating message records in database...");
     
-    // Update conversation timestamp to mark as recently updated
     await prisma.conversation.update({
       where: { id: conversation.id },
       data: { updatedAt: new Date() }
@@ -249,7 +225,6 @@ export async function POST(req: Request) {
     console.log("Voice processing completed successfully");
     console.log(`Created messages in conversation ${conversation.id}`);
     
-    // When processing is complete, update the request status
     recentRequests.set(contentHash, {
       timestamp: Date.now(),
       processing: false
@@ -268,7 +243,6 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error("Error processing voice:", error);
     
-    // Get more detailed error information
     let errorMessage = "Unknown error occurred";
     if (error instanceof Error) {
       errorMessage = error.message;
