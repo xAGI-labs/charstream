@@ -115,7 +115,7 @@ export function MobileNavigation({
                         className="h-6 w-auto"
                         priority
                       />
-                      <span className="text-sm font-medium">chatstream.ai</span>
+                      <span className="text-sm font-medium">charstream.xyz</span>
                     </Link>
                     <SheetClose asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
