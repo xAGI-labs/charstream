@@ -172,15 +172,15 @@ async function checkCloudinaryCache(cacheKey: string): Promise<string | null> {
 
 async function getPlaceholderAvatar(name: string): Promise<string | null> {
   try {
-    const cacheKey = `placeholder-${name.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-    
     const initial = encodeURIComponent(name.charAt(0).toUpperCase());
     
     const bgColors = ['3B82F6', '8B5CF6', 'EC4899', 'F97316', '10B981'];
     const colorIndex = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % bgColors.length;
     const bgColor = bgColors[colorIndex];
     
-    const cloudinaryUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/w_512,h_512,c_fill,b_rgb:${bgColor},bo_0px_solid_rgb:ffffff/l_text:Arial_250_bold:${initial},co_white,c_fit,g_center/${cacheKey}.png`;
+    // FIXED: Don't reference a specific filename that doesn't exist
+    // Instead use Cloudinary transformations directly with a generic filename or no filename
+    const cloudinaryUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/w_512,h_512,c_fill,b_rgb:${bgColor},bo_0px_solid_rgb:ffffff/l_text:Arial_250_bold:${initial},co_white,c_fit,g_center/placeholder.png`;
     
     return cloudinaryUrl;
   } catch (error) {

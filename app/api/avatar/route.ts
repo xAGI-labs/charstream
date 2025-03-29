@@ -84,10 +84,15 @@ async function getPlaceholderAvatar(name: string): Promise<string | null> {
     const cacheKey = generateCacheKey(name);
     const firstChar = encodeURIComponent(name.charAt(0).toUpperCase());
     
-    // Use transformation URL to create a text-based avatar
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/w_200,h_200,c_fill,r_max/l_text:arial_80:${firstChar},co_white,w_120,h_120,c_fit/fl_layer_apply,g_center,x_0,y_0/e_shadow/w_200,h_200/${cacheKey}.png`;
+    // Use a consistent color based on the name
+    const bgColors = ['3B82F6', '8B5CF6', 'EC4899', 'F97316', '10B981'];
+    const colorIndex = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % bgColors.length;
+    const bgColor = bgColors[colorIndex];
+    
+    // Use transformation URL to create a text-based avatar - use placeholder.png instead of trying to reference the specific filename
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/w_200,h_200,c_fill,r_max,b_rgb:${bgColor}/l_text:arial_80:${firstChar},co_white,w_120,h_120,c_fit/fl_layer_apply,g_center,x_0,y_0/placeholder.png`;
   } catch (error) {
-    console.error("Failed to generate placeholder avatar:", error);
+    console.error("Avatar API: Failed to generate placeholder avatar:", error);
     return null;
   }
 }
