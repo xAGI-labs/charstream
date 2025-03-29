@@ -106,17 +106,17 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
   return (
     <>
       <aside className={cn("border-r flex flex-col transition-all duration-300 relative bg-sidebar shadow-sm", "h-screen", isCollapsed ? "w-[68px]" : "w-[240px]")}>
-        <div className="py-4 px-3 flex items-center justify-between border-b border-border/30 relative">
+        <div className="py-5 px-4 flex items-center justify-between border-b border-border/30 relative">
           <Link href="/" className={cn(
             "flex items-center gap-2", 
-            isCollapsed ? "justify-center w-full" : "pl-1"
+            isCollapsed && "justify-center w-full"
           )}>
-            <div className="flex items-center justify-center w-8 h-8">
+            <div className={cn("flex items-center justify-center", isCollapsed ? "w-8 h-8" : "w-8 h-8")}>
               <Image 
                 src="/logo.png"
                 alt="Chatstream Logo"
-                width={32}
-                height={32}
+                width={35}
+                height={35}
                 className="w-full h-full object-contain"
                 priority
               />
@@ -127,8 +127,8 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn("h-8 w-8 rounded-full text-muted-foreground hover:text-foreground", 
-              isCollapsed && "absolute -right-3 bg-background shadow-sm border border-border/40"
+            className={cn("h-8 w-8 z-30 rounded-full text-muted-foreground hover:text-foreground", 
+              isCollapsed && "absolute -right-4 bg-background shadow-sm border border-border/40"
             )}
             onClick={toggleCollapsed}
           >
@@ -140,7 +140,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
         </div>
 
         <div className="flex flex-col flex-grow overflow-hidden min-h-0">
-          <div className="px-3 py-3">
+          <div className="px-3 py-4">
             <TooltipProvider delayDuration={300}>
               <div className="space-y-1">
                 <Tooltip>
@@ -150,14 +150,14 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       variant="default"
                       className={cn(
                         "justify-start w-fit gap-3 text-black font-extralight rounded-full bg-yellow-300 hover:bg-yellow-400 cursor-pointer",
-                        isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "px-4 h-10"
+                        isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-12"
                       )}
                     >
                       <Plus className={cn(
                         "transition-all",
-                        isCollapsed ? "h-5 w-5" : "h-5 w-5"
+                        isCollapsed ? "h-5 w-5" : "h-10 w-10"
                       )} />
-                      {!isCollapsed && <span className="text-sm font-semibold">Create</span>}
+                      {!isCollapsed && <span className="text-lg font-semibold">Create</span>}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
@@ -172,7 +172,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                         variant="secondary"
                         className={cn(
                           "w-full justify-start gap-3 font-medium rounded-full mt-2 cursor-pointer",
-                          isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "px-3 h-9"
+                          isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-10"
                         )}
                       >
                         <FaRegCompass className="h-4 w-4" />
@@ -191,7 +191,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       <Button
                         className={cn(
                           "w-full justify-start bg-white text-black gap-3 font-medium rounded-full hover:bg-neutral-300 mt-2 cursor-pointer",
-                          isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "px-3 h-9"
+                          isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-10"
                         )}
                       >
                         <Book className="h-4 w-4" />
@@ -221,7 +221,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           )}
 
           {!isCollapsed && (
-            <div className="px-3 py-2">
+            <div className="px-4 py-2">
               <h3 className="text-xs font-medium text-neutral-950 dark:text-muted-foreground/70 uppercase tracking-wider">
                 Recent Chats
               </h3>
@@ -233,15 +233,15 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           </div>
         </div>
 
-        <div className={cn("px-3 py-2 flex justify-center transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
-          <div className="w-[4rem] h-[1.5rem]">
+        <div className={cn("p-3 flex justify-center transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
+          <div className="w-[4rem] h-[1.5rem] mb-4">
             <ThemeSwitch />
           </div>
         </div>
 
         <div className={cn(
-          "border-t border-border/30",
-          isCollapsed ? "px-3 py-3 flex justify-center" : "px-3 py-3"
+          "border-t border-border/30 mt-auto",
+          isCollapsed ? "px-3 flex justify-center py-3" : "px-8"
         )}>
           <TooltipProvider delayDuration={300}>
             <Tooltip>
@@ -254,13 +254,13 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                       "font-medium rounded-full cursor-pointer text-black bg-yellow-300 hover:bg-yellow-400",
                       isCollapsed ? 
                         "h-9 w-9 p-1 animate-pulse" :
-                        "w-full justify-center gap-2 h-9"
+                        "w-full justify-center gap-3 mt-2 h-10"
                     )}
                   >  
                     {isCollapsed ? (
                       <LuBrainCircuit className="h-4 w-4" />
                     ) : (
-                      <>upgrade to <span className="font-bold -ml-1">charstream+</span></>
+                      <>upgrade to <span className="font-bold -ml-2">charstream+</span></>
                     )}
                   </Button>
                 </Link>
@@ -272,18 +272,18 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           </TooltipProvider>
         </div>
 
-        <div className="px-3 py-3 border-t border-border/30">
+        <div className="p-3 border-t border-border/30 mt-auto">
           {isSignedIn ? (
             <div 
               className={cn(
                 "flex items-center",
-                isCollapsed ? "justify-center" : "justify-between py-1 px-2 bg-background/40 rounded-full cursor-pointer"
+                isCollapsed ? "justify-center" : "justify-between p-3 bg-background/40 rounded-full cursor-pointer"
               )}
               onClick={() => userButtonRef.current?.querySelector('button')?.click()}
               role="button"
             >
               <div className={cn(
-                "flex items-center gap-2",
+                "flex items-center gap-2 mt-0.5",
                 isCollapsed && "justify-center"
               )}>
                 <div ref={userButtonRef}>
@@ -317,7 +317,7 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           )}
         </div>
 
-        <div className={cn("py-2 flex items-center justify-center gap-3 text-[10px] text-neutral-950 dark:text-muted-foreground/60 transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
+        <div className={cn("mt-3 flex items-center justify-center gap-3 text-[10px] text-neutral-950 dark:text-muted-foreground/60 mb-4 transition-opacity", isCollapsed && "opacity-0 pointer-events-none")}>
           <Link href="#" className="hover:text-muted-foreground">
             Privacy
           </Link>
