@@ -6,6 +6,7 @@ import { generateCharacterResponse } from "@/lib/chat-helpers"
 
 const prisma = new PrismaClient()
 
+// Type for the context parameter with generic params
 type RouteContext<T> = { params: T }
 
 export async function POST(
@@ -13,6 +14,7 @@ export async function POST(
   context: { params: { chatId: string } }
 ) {
   try {
+    // Fix: Await the params before accessing chatId
     const params = await context.params
     const chatId = params.chatId
     
@@ -25,18 +27,19 @@ export async function POST(
     const userId = user.id
     
     const body = await req.json()
+    // Explicitly log the full body to debug
     console.log("Request body:", body);
 
     const { content, isUnhinged = false } = body
     
-    // checking the vibe ✨
+    // Add debugging to explicitly see if isUnhinged is received
     console.log(`Received message for chat ${chatId} with unhinged mode: ${isUnhinged}, type: ${typeof isUnhinged}`)
     
     if (!content || typeof content !== "string" || content.trim() === "") {
       return new NextResponse("Message content is required", { status: 400 })
     }
     
-    // grabbing convo + character data + recent msgs
+    // Verify conversation exists and belongs to user - INCLUDE CHARACTER DATA
     const conversation = await prisma.conversation.findUnique({
       where: {
         id: chatId,
@@ -48,7 +51,7 @@ export async function POST(
           orderBy: {
             createdAt: 'asc'
           },
-          take: 50 // limit for context
+          take: 50 // Limit for context
         }
       }
     })
@@ -57,7 +60,7 @@ export async function POST(
       return new NextResponse("Conversation not found", { status: 404 })
     }
     
-    // backup plan if character went MIA
+    // If character is missing, try to fetch it separately
     if (!conversation.character && conversation.characterId) {
       console.log(`Character missing in messages route, fetching separately: ${conversation.characterId}`)
       
@@ -77,7 +80,7 @@ export async function POST(
       }
     }
     
-    // save user's message
+    // Create user message
     const userMessage = await prisma.message.create({
       data: {
         content,
@@ -86,10 +89,11 @@ export async function POST(
       }
     })
     
+    // Generate AI response using our direct helper function
     let aiResponse = "I'm sorry, I couldn't generate a response.";
     
     try {
-      // grab recent msgs for the tea ☕
+      // Format recent messages for context
       const recentMessages = conversation.messages
         .slice(-5)
         .map(m => ({
@@ -97,7 +101,7 @@ export async function POST(
           content: m.content
         }));
       
-      // get the memory receipts 🧠
+      // Retrieve memory and include it in the AI response context
       const memory = await prisma.memory.findMany({
         where: {
           userId,
@@ -108,13 +112,12 @@ export async function POST(
 
       const memoryContent = memory.map((m) => m.content).join('\n');
 
-      // time to cook up a response 👨‍🍳
+      // Generate response directly - passing unhinged status
       aiResponse = await generateCharacterResponse(
         conversation.characterId, 
         [...recentMessages, { role: 'system', content: `Memory:\n${memoryContent}` }],
         content,
-        isUnhinged,
-        userId
+        isUnhinged
       );
       
       console.log(`Generated response for conversation ${chatId}, unhinged: ${isUnhinged}`);
@@ -123,7 +126,7 @@ export async function POST(
       aiResponse = `I apologize, but I'm having temporary technical difficulties. Please try again in a moment.`;
     }
     
-    // save AI's comeback
+    // Create AI message
     const aiMessage = await prisma.message.create({
       data: {
         content: aiResponse,
@@ -132,7 +135,7 @@ export async function POST(
       }
     });
     
-    // bump the convo timestamp
+    // Update conversation timestamp
     await prisma.conversation.update({
       where: { id: chatId },
       data: { updatedAt: new Date() }
