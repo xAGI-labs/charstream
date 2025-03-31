@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chatstream.xyz/sitemap.xml
+
+# Optimize crawling
+User-agent: Googlebot
+Crawl-delay: 1
+
+User-agent: bingbot
+Crawl-delay: 1
+
+# Prevent duplicated content in search results
+Disallow: /api/
+Disallow: /admin/

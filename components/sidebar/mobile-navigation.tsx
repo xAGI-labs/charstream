@@ -29,6 +29,7 @@ import { ConversationList } from "./conversation-list"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { FaWandSparkles } from "react-icons/fa6";
 
 interface MobileNavigationProps {
   isSignedIn?: boolean;
@@ -206,7 +207,7 @@ export function MobileNavigation({
                             variant={isActive('/ghiblify') ? "secondary" : "ghost"} 
                             className="w-full justify-start text-base"
                           >
-                            <Sparkles className="mr-3 h-5 w-5" />
+                            <FaWandSparkles className="mr-3 h-5 w-5" />
                             Ghiblify Your Images
                           </Button>
                         </Link>
