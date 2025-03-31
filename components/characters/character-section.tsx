@@ -12,7 +12,7 @@ import Link from "next/link"
 
 interface CharacterSectionProps {
   title: string
-  category: string // We'll use this to fetch the right category
+  category: string 
 }
 
 export function CharacterSection({ title, category }: CharacterSectionProps) {
@@ -23,12 +23,10 @@ export function CharacterSection({ title, category }: CharacterSectionProps) {
   const [characters, setCharacters] = useState<Character[]>([])
   const [isFetching, setIsFetching] = useState(true)
   
-  // Fetch characters from database on component mount
   useEffect(() => {
     async function fetchHomeCharacters() {
       try {
         setIsFetching(true)
-        // Add a timestamp to bust cache
         const timestamp = new Date().getTime();
         const response = await fetch(`/api/home-characters?category=${category}&t=${timestamp}`)
         
@@ -38,7 +36,6 @@ export function CharacterSection({ title, category }: CharacterSectionProps) {
         
         const data = await response.json()
         
-        // Add debugging to check imageUrls
         console.log(`Character Section: Fetched ${data.length} ${category} characters:`, 
           data.map((c: any) => ({ 
             name: c.name, 
@@ -53,14 +50,12 @@ export function CharacterSection({ title, category }: CharacterSectionProps) {
           }))
         );
         
-        // Ensure we handle image URLs consistently
-        setCharacters(data.map((char: any) => {
-          // Map database characters to component characters
+        const limitedData = data.slice(0, 8);
+        setCharacters(limitedData.map((char: any) => {
           return {
             id: char.id,
             name: char.name,
             description: char.description,
-            // Ensure image URL is valid or set to undefined
             imageUrl: char.imageUrl || undefined
           };
         }))

@@ -5,10 +5,10 @@ import { Character } from "@/types/character"
 interface CharacterGridProps {
   characters: Character[]
   onCharacterClick: (character: Character) => void
+  sectionName?: string
 }
 
-export function CharacterGrid({ characters, onCharacterClick }: CharacterGridProps) {
-  // Track which images have failed to load
+export function CharacterGrid({ characters, onCharacterClick, sectionName }: CharacterGridProps) {
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({})
 
   if (characters.length === 0) {
@@ -19,47 +19,107 @@ export function CharacterGrid({ characters, onCharacterClick }: CharacterGridPro
     )
   }
 
-  // Generate a fallback avatar URL that will reliably work in incognito
   const getFallbackAvatarUrl = (name: string) => {
-    // Always use allowRobohashFallback=true to ensure we get a reliable fallback
     return `/api/avatar?name=${encodeURIComponent(name)}&width=256&height=256&cache=true&allowRobohashFallback=true&t=${Date.now()}`
   }
 
+  const isForYouSection = sectionName === "For You"
+  
+  if (isForYouSection) {
+    return (
+      <div 
+        className="overflow-x-auto pb-4 -mx-4 px-4"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        <div className="flex space-x-4" style={{ minWidth: "max-content" }}>
+          {characters.map((character) => (
+            <div
+              key={character.id}
+              className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900"
+              onClick={() => onCharacterClick(character)}
+            >
+              <div className="flex p-3">
+                <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
+                  {character.imageUrl && !failedImages[character.id] ? (
+                    <img
+                      src={character.imageUrl}
+                      alt={character.name}
+                      className="h-full w-full object-cover"
+                      onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
+                    />
+                  ) : (
+                    <img
+                      src={getFallbackAvatarUrl(character.name)}
+                      alt={character.name}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="ml-3 flex flex-col overflow-hidden">
+                  <h3 className="font-semibold text-sm line-clamp-1">{character.name}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-1"></p>
+                  <p className="text-xs mt-1 line-clamp-2">
+                    {character.description || "No description available."}
+                  </p>
+                </div>
+              </div>
+              <div className="px-3 pb-2 flex items-center">
+                <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-rows-2 grid-flow-col gap-4 overflow-x-auto pb-4" 
+         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+      <style jsx>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       {characters.map((character) => (
         <div
           key={character.id}
-          className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:border-primary/50 transition-colors"
+          className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900"
           onClick={() => onCharacterClick(character)}
         >
-          <div className="aspect-square relative mb-3 rounded-md overflow-hidden bg-muted">
-            {character.imageUrl && !failedImages[character.id] ? (
-              <Image
-                src={character.imageUrl}
-                alt={character.name}
-                fill
-                className="object-cover"
-                onError={() => {
-                  // Mark this image as failed and it will use the fallback
-                  setFailedImages(prev => ({ ...prev, [character.id]: true }))
-                }}
-              />
-            ) : (
-              <Image
-                src={getFallbackAvatarUrl(character.name)}
-                alt={character.name}
-                fill
-                className="object-cover"
-              />
-            )}
+          <div className="flex p-3">
+            <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
+              {character.imageUrl && !failedImages[character.id] ? (
+                <img
+                  src={character.imageUrl}
+                  alt={character.name}
+                  className="h-full w-full object-cover"
+                  onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
+                />
+              ) : (
+                <img
+                  src={getFallbackAvatarUrl(character.name)}
+                  alt={character.name}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            <div className="ml-3 flex flex-col overflow-hidden">
+              <h3 className="font-semibold text-sm line-clamp-1">{character.name}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-1"></p>
+              <p className="text-xs mt-1 line-clamp-2">
+                {character.description || "No description available."}
+              </p>
+            </div>
           </div>
-          <h3 className="font-medium truncate">{character.name}</h3>
-          {character.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {character.description}
-            </p>
-          )}
+          <div className="px-3 pb-2 flex items-center">
+            <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
+          </div>
         </div>
       ))}
     </div>

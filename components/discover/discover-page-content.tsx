@@ -113,7 +113,7 @@ export default function DiscoverPageContent() {
       console.log("Conversation created:", data)
       toast.success(`Chat with ${character.name} created successfully`, { id: "creating-conversation" })
 
-      // Redirect to the new conversation
+      //redirect to chat page btw
       router.push(`/chat/${data.id}`)
     } catch (error) {
       console.error("Error creating conversation:", error)
@@ -140,7 +140,7 @@ export default function DiscoverPageContent() {
   }
 
   return (
-    <div className="flex flex-col w-full max-w-6xl mx-auto px-4 py-8 h-screen">
+    <div className="flex flex-col w-full max-w-7xl mx-auto px-4 py-8 h-screen">
       <CreateCharacterDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
 
       <div className="w-full max-w-3xl mx-auto mb-8">
@@ -250,188 +250,52 @@ export default function DiscoverPageContent() {
             </div>
           </section>
 
+          {/* Community Characters Section */}
           <section className="mb-6">
             <h2 className="text-xl font-semibold mb-4">Community Characters</h2>
-            <div
-              className="overflow-x-auto pb-4 -mx-4 px-4"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-              <div className="flex space-x-4" style={{ minWidth: "max-content" }}>
-                {publicCharacters.length > 0 ? (
-                  publicCharacters.map((character) => (
-                    <div
-                      key={character.id}
-                      className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900"
-                      onClick={() => handleCharacterClick(character)}
-                    >
-                      <div className="flex p-3">
-                        <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                          {character.imageUrl && !failedImages[character.id] ? (
-                            <img
-                              src={character.imageUrl}
-                              alt={character.name}
-                              className="h-full w-full object-cover"
-                              onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
-                            />
-                          ) : (
-                            <img
-                              src={getFallbackAvatarUrl(character.name)}
-                              alt={character.name}
-                              className="h-full w-full object-cover"
-                            />
-                          )}
-                        </div>
-                        <div className="ml-3 flex flex-col overflow-hidden">
-                          <h3 className="font-semibold text-sm line-clamp-1">{character.name}</h3>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                          </p>
-                          <p className="text-xs mt-1 line-clamp-2">
-                            {character.description || "No description available."}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="px-3 pb-2 flex items-center">
-                        <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 px-4 bg-zinc-900 rounded-lg shadow-sm w-full">
-                    <p className="text-muted-foreground">No community characters available yet.</p>
-                  </div>
-                )}
+            {publicCharacters.length > 0 ? (
+              <CharacterGrid 
+                characters={publicCharacters} 
+                onCharacterClick={handleCharacterClick}
+                sectionName="Community"
+              />
+            ) : (
+              <div className="text-center py-8 px-4 bg-zinc-900 rounded-lg shadow-sm w-full">
+                <p className="text-muted-foreground">No community characters available yet.</p>
               </div>
-            </div>
+            )}
           </section>
-
 
           {/* Featured Section */}
           <section className="mb-6">
             <h2 className="text-xl font-semibold mb-4">Featured</h2>
-            <div
-              className="overflow-x-auto pb-4 -mx-4 px-4"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-              <div className="flex space-x-4" style={{ minWidth: "max-content" }}>
-                {homeCharacters.filter((c) => c.category === "educational").length > 0 ? (
-                  homeCharacters
-                    .filter((c) => c.category === "educational")
-                    .map((character) => (
-                      <div
-                        key={character.id}
-                        className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900"
-                        onClick={() => handleCharacterClick(character)}
-                      >
-                        <div className="flex p-3">
-                          <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                            {character.imageUrl && !failedImages[character.id] ? (
-                              <img
-                                src={character.imageUrl}
-                                alt={character.name}
-                                className="h-full w-full object-cover"
-                                onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
-                              />
-                            ) : (
-                              <img
-                                src={getFallbackAvatarUrl(character.name)}
-                                alt={character.name}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                          <div className="ml-3 flex flex-col overflow-hidden">
-                            <h3 className="font-semibold text-sm line-clamp-1">{character.name}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-1">
-                            </p>
-                            <p className="text-xs mt-1 line-clamp-2">
-                              {character.description || "No description available."}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="px-3 pb-2 flex items-center">
-                          <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
-                        </div>
-                      </div>
-                    ))
-                ) : (
-                  <div className="text-center py-8 px-4 bg-zinc-900 rounded-lg shadow-sm w-full">
-                    <p className="text-muted-foreground">No featured characters available yet.</p>
-                  </div>
-                )}
+            {homeCharacters.filter((c) => c.category === "educational").length > 0 ? (
+              <CharacterGrid 
+                characters={homeCharacters.filter((c) => c.category === "educational")} 
+                onCharacterClick={handleCharacterClick}
+                sectionName="Featured"
+              />
+            ) : (
+              <div className="text-center py-8 px-4 bg-zinc-900 rounded-lg shadow-sm w-full">
+                <p className="text-muted-foreground">No featured characters available yet.</p>
               </div>
-            </div>
+            )}
           </section>
 
           {/* Popular Section */}
           <section className="mb-6">
             <h2 className="text-xl font-semibold mb-4">Popular</h2>
-            <div
-              className="overflow-x-auto pb-4 -mx-4 px-4"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              <style jsx>{`
-                div::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-              <div className="flex space-x-4" style={{ minWidth: "max-content" }}>
-                {homeCharacters.filter((c) => c.category === "popular").length > 0 ? (
-                  homeCharacters
-                    .filter((c) => c.category === "popular")
-                    .map((character) => (
-                      <div
-                        key={character.id}
-                        className="w-64 flex-shrink-0 cursor-pointer bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow dark:bg-zinc-900"
-                        onClick={() => handleCharacterClick(character)}
-                      >
-                        <div className="flex p-3">
-                          <div className="h-16 w-16 flex-shrink-0 relative bg-muted/20 rounded-md overflow-hidden">
-                            {character.imageUrl && !failedImages[character.id] ? (
-                              <img
-                                src={character.imageUrl}
-                                alt={character.name}
-                                className="h-full w-full object-cover"
-                                onError={() => setFailedImages(prev => ({ ...prev, [character.id]: true }))}
-                              />
-                            ) : (
-                              <img
-                                src={getFallbackAvatarUrl(character.name)}
-                                alt={character.name}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                          <div className="ml-3 flex flex-col overflow-hidden">
-                            <h3 className="font-semibold text-sm line-clamp-1">{character.name}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-1">
-                            </p>
-                            <p className="text-xs mt-1 line-clamp-2">
-                              {character.description || "No description available."}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="px-3 pb-2 flex items-center">
-                          <span className="text-xs text-muted-foreground">{Math.floor(Math.random() * 1000) + 1}k</span>
-                        </div>
-                      </div>
-                    ))
-                ) : (
-                  <div className="text-center py-8 px-4 bg-zinc-900 rounded-lg shadow-sm w-full">
-                    <p className="text-muted-foreground">No popular characters available yet.</p>
-                  </div>
-                )}
+            {homeCharacters.filter((c) => c.category === "popular").length > 0 ? (
+              <CharacterGrid 
+                characters={homeCharacters.filter((c) => c.category === "popular")} 
+                onCharacterClick={handleCharacterClick}
+                sectionName="Popular"
+              />
+            ) : (
+              <div className="text-center py-8 px-4 bg-zinc-900 rounded-lg shadow-sm w-full">
+                <p className="text-muted-foreground">No popular characters available yet.</p>
               </div>
-            </div>
+            )}
           </section>
 
           <div className="mt-6 mb-6 text-center">

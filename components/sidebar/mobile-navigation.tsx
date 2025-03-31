@@ -200,6 +200,17 @@ export function MobileNavigation({
                           </Button>
                         </Link>
                       </SheetClose>
+                      <SheetClose asChild>
+                        <Link href="/ghiblify">
+                          <Button 
+                            variant={isActive('/ghiblify') ? "secondary" : "ghost"} 
+                            className="w-full justify-start text-base"
+                          >
+                            <Sparkles className="mr-3 h-5 w-5" />
+                            Ghiblify Your Images
+                          </Button>
+                        </Link>
+                      </SheetClose>
                     </div>
                     
                     {/* Recent conversations with modern styling */}

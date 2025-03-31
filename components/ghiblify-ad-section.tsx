@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { StarHalfIcon } from "lucide-react";
 
 export function GhiblifyAdSection() {
   return (
@@ -46,7 +47,7 @@ export function GhiblifyAdSection() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-100/50 dark:bg-gray-800/80 border-0 text-neutral-900 dark:text-white overflow-hidden">
+          <Card className="bg-gray-100/50 dark:bg-neutral-800/80 border-0 text-neutral-900 dark:text-white overflow-hidden">
             <CardContent className="p-4">
               <h2 className="text-lg font-medium mb-2">Perfect for Avatars</h2>
               <p className="text-sm text-gray-700 dark:text-gray-300">

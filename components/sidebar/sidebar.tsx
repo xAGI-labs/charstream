@@ -39,10 +39,21 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const userButtonRef = useRef<HTMLDivElement>(null);
 
   // Check if the sidebar should be rendered
   const shouldRenderSidebar = !pathname?.startsWith("/admin") && !pathname?.startsWith("/pricing");
+
+  // Handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Clear search when navigating
+  useEffect(() => {
+    setSearchQuery("");
+  }, [pathname]);
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -189,8 +200,9 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                   <TooltipTrigger asChild>
                     <Link href="/wiki">
                       <Button
+                        variant="secondary"
                         className={cn(
-                          "w-full justify-start bg-white text-black gap-3 font-medium rounded-full hover:bg-neutral-300 mt-2 cursor-pointer",
+                          "w-full justify-start  gap-3 font-medium rounded-full hover:bg-neutral-300 hover:text-black mt-2 cursor-pointer",
                           isCollapsed ? "p-2 h-9 w-9 justify-center items-center" : "p-4 h-10"
                         )}
                       >
@@ -213,8 +225,10 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transform text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search"
+                  placeholder="Search conversations"
                   className="pl-8 h-9 text-sm bg-background/50"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                 />
               </div>
             </div>
@@ -223,13 +237,13 @@ export function Sidebar({ setIsOpen, onCollapsedChange }: SidebarProps) {
           {!isCollapsed && (
             <div className="px-4 py-2">
               <h3 className="text-xs font-medium text-neutral-950 dark:text-muted-foreground/70 uppercase tracking-wider">
-                Recent Chats
+                {searchQuery ? "Search Results" : "Recent Chats"}
               </h3>
             </div>
           )}
 
           <div className="flex-grow overflow-y-auto scrollbar-thin">
-            <ConversationList isCollapsed={isCollapsed} />
+            <ConversationList isCollapsed={isCollapsed} searchQuery={searchQuery} />
           </div>
         </div>
 

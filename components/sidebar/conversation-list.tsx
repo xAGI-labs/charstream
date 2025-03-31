@@ -28,10 +28,12 @@ interface Conversation {
 
 interface ConversationListProps {
   isCollapsed?: boolean;
+  searchQuery?: string;
 }
 
-export function ConversationList({ isCollapsed = false }: ConversationListProps) {
+export function ConversationList({ isCollapsed = false, searchQuery = "" }: ConversationListProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const { userId } = useAuth()
@@ -50,6 +52,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
       
       const data = await response.json()
       setConversations(data)
+      setFilteredConversations(data)
     } catch (error) {
       console.error('Error fetching conversations:', error)
     } finally {
@@ -89,6 +92,21 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
     }
   }, [fetchConversations])
 
+  // Filter conversations based on search query
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim() === '') {
+      setFilteredConversations(conversations)
+    } else {
+      const normalizedQuery = searchQuery.toLowerCase().trim()
+      const filtered = conversations.filter(conversation => {
+        const titleMatch = conversation.title.toLowerCase().includes(normalizedQuery)
+        const characterNameMatch = conversation.character?.name.toLowerCase().includes(normalizedQuery)
+        return titleMatch || characterNameMatch
+      })
+      setFilteredConversations(filtered)
+    }
+  }, [searchQuery, conversations])
+
   useEffect(() => {
     window.refreshConversationList = fetchConversations
   }, [fetchConversations])
@@ -110,7 +128,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
     )
   }
   
-  if (conversations.length === 0) {
+  if (filteredConversations.length === 0) {
     return (
       <div className={cn(
         "py-2",
@@ -118,7 +136,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
       )}>
         {!isCollapsed && (
           <div className="px-2 py-3 text-xs text-center text-muted-foreground/70 bg-muted/20 rounded-md">
-            No conversations yet. Start chatting with a character!
+            {searchQuery ? "No conversations match your search" : "No conversations yet. Start chatting with a character!"}
           </div>
         )}
       </div>
@@ -131,7 +149,7 @@ export function ConversationList({ isCollapsed = false }: ConversationListProps)
       isCollapsed ? "px-3" : "px-3"
     )}>
       <TooltipProvider delayDuration={300}>
-        {conversations.slice(0, 6).map((conversation) => {
+        {filteredConversations.slice(0, 6).map((conversation) => {
           const isActive = pathname === `/chat/${conversation.id}`
           
           const imageUrl = conversation.character.imageUrl || 
