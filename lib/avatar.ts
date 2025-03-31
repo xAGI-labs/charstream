@@ -28,8 +28,7 @@ export async function generateAvatar(name: string, description?: string): Promis
       return existingUrl;
     }
 
-    const prompt = getAvatarPrompt(name, description);
-    
+    // Try Together API first if key is available
     if (process.env.TOGETHER_API_KEY) {
       console.log("Using Together API for avatar generation");
       try {
@@ -37,7 +36,7 @@ export async function generateAvatar(name: string, description?: string): Promis
           WORKER_URL,
           {
             model: "black-forest-labs/FLUX.1-dev",
-            prompt,
+            prompt: getTogetherAvatarPrompt(name, description),
             width: 512,
             height: 512,
             steps: 28,
@@ -61,16 +60,18 @@ export async function generateAvatar(name: string, description?: string): Promis
             console.log(`Successfully converted to Cloudinary URL: ${cloudinaryUrl}`);
             avatarCache[cacheKey] = cloudinaryUrl;
             return cloudinaryUrl;
-          } else {
-            console.error("Failed to upload to Cloudinary, falling back to placeholder");
-            return await getPlaceholderAvatar(name);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Together API error:", error);
+        // Log more specific error information
+        if (error.response) {
+          console.error(`Together API status: ${error.response.status}, data:`, error.response.data);
+        }
       }
     }
     
+    // Fall back to OpenAI if available
     if (process.env.OPENAI_API_KEY) {
       console.log("Falling back to OpenAI for avatar generation");
       try {
@@ -79,7 +80,7 @@ export async function generateAvatar(name: string, description?: string): Promis
         });
 
         const response = await openai.images.generate({
-          prompt,
+          prompt: getOpenAIAvatarPrompt(name, description),
           n: 1,
           size: "512x512",
           response_format: "b64_json",
@@ -95,12 +96,17 @@ export async function generateAvatar(name: string, description?: string): Promis
         avatarCache[cacheKey] = imageUrl;
         
         return imageUrl;
-      } catch (error) {
+      } catch (error: any) {
         console.error("OpenAI avatar generation error:", error);
-        return await getPlaceholderAvatar(name);
+        // Log more specific error information for OpenAI
+        if (error.response) {
+          console.error(`OpenAI error status: ${error.status}, message:`, error.message);
+        }
       }
     }
 
+    // Fall back to placeholder as last resort
+    console.log(`All API attempts failed, using placeholder avatar for ${name}`);
     return await getPlaceholderAvatar(name);
   } catch (error) {
     console.error("Avatar generation error:", error);
@@ -189,7 +195,7 @@ async function getPlaceholderAvatar(name: string): Promise<string | null> {
   }
 }
 
-function getAvatarPrompt(name: string, description?: string): string {
+function getTogetherAvatarPrompt(name: string, description?: string): string {
   let prompt = `Authentic Studio Ghibli character portrait of ${name}`;
   
   if (description && description.trim().length > 0) {
@@ -201,9 +207,36 @@ function getAvatarPrompt(name: string, description?: string): string {
   and a natural earth-toned color palette. Hair should be slightly messy yet detailed with individual strands, and facial features should remain minimalist. 
   The character must have a gentle, innocent Miyazaki-style expression, shown in a 3/4 view. Draw the character exactly as described in the provided character description, 
   ensuring they look like they were designed by Studio Ghibli animators for an actual film. Background should be colorful, lush, and detailed, reflecting a practical yet whimsical setting
-  (e.g., a small-town scene or something you see fit according to their description). Avoid exaggerated anime tropes; maintain Ghibli’s subdued, heartfelt, and naturalistic approach to character design.`;
+  (e.g., a small-town scene or something you see fit according to their description). Avoid exaggerated anime tropes; maintain Ghibli's subdued, heartfelt, and naturalistic approach to character design.`;
   
   return prompt;
+}
+
+function getOpenAIAvatarPrompt(name: string, description?: string): string {
+  // Create a shorter prompt for OpenAI to stay under the 1000 character limit
+  let prompt = `Studio Ghibli portrait of ${name}`;
+  
+  if (description && description.trim().length > 0) {
+    // Limit description length if needed
+    const shortDesc = description.length > 100 ? description.substring(0, 100) + "..." : description;
+    prompt += `, who is ${shortDesc}`;
+  }
+  
+  prompt += `. Ghibli style with round face, small nose/mouth, large expressive eyes, clean linework, soft watercolor shading, natural colors. 
+  Character should have Miyazaki-style expression in 3/4 view with detailed but messy hair. 
+  Simple colorful background that fits the character. Naturalistic, heartfelt design.`;
+  
+  // Ensure prompt is under 1000 characters
+  if (prompt.length > 990) {
+    prompt = prompt.substring(0, 990);
+  }
+  
+  return prompt;
+}
+
+// Replace the old getAvatarPrompt with a function that chooses between the two based on service
+function getAvatarPrompt(name: string, description?: string, service: 'openai' | 'together' = 'together'): string {
+  return service === 'openai' ? getOpenAIAvatarPrompt(name, description) : getTogetherAvatarPrompt(name, description);
 }
 
 export async function ensureCloudinaryAvatar(togetherUrl: string, name: string): Promise<string> {
