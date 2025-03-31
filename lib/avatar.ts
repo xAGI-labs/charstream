@@ -202,12 +202,16 @@ function getTogetherAvatarPrompt(name: string, description?: string): string {
     prompt += `, who is ${description}`;
   }
   
-  prompt += `Studio Ghibli animation style, matching the naturalistic and grounded aesthetic of films like My Neighbor Totoro and Kikis Delivery Service. 
+  prompt += `Studio Ghibli animation style, matching the naturalistic and grounded aesthetic of films like My Neighbor Totoro and Kikis Delivery Service, Spirited Away and TOK 
   Key Ghibli features: round face with a small nose and mouth, large expressive eyes with subtle highlights, clean and simple linework, soft watercolor-like shading, 
-  and a natural earth-toned color palette. Hair should be slightly messy yet detailed with individual strands, and facial features should remain minimalist. 
-  The character must have a gentle, innocent Miyazaki-style expression, shown in a 3/4 view. Draw the character exactly as described in the provided character description, 
-  ensuring they look like they were designed by Studio Ghibli animators for an actual film. Background should be colorful, lush, and detailed, reflecting a practical yet whimsical setting
-  (e.g., a small-town scene or something you see fit according to their description). Avoid exaggerated anime tropes; maintain Ghibli's subdued, heartfelt, and naturalistic approach to character design.`;
+  and a natural and prominent earth-toned color palette. 
+  Hair should be slightly messy yet detailed with individual strands, and facial features should remain minimalist. 
+  The character must have a gentle, innocent Miyazaki-style expression, 
+  shown in a 3/4 view. Draw the character exactly as described in the provided character description, 
+  ensuring they look like they were designed by Studio Ghibli animators for an actual film. 
+  Background should be colorful, lush, and detailed, reflecting a practical yet whimsical setting
+  (e.g., a small-town scene or something you see fit according to their description). 
+  Avoid exaggerated anime tropes; maintain Ghibli's subdued, heartfelt, and naturalistic approach to character design.`;
   
   return prompt;
 }
