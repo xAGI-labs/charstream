@@ -35,6 +35,7 @@ export default function GhiblifyPage() {
   const [error, setError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
+  const [currentImageHash, setCurrentImageHash] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultImgRef = useRef<HTMLImageElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -79,14 +80,31 @@ export default function GhiblifyPage() {
     }
   };
 
+  const calculateImageHash = async (imageData: string): Promise<string> => {
+    const data = imageData.split(',')[1]; // Remove the data URL prefix
+    const msgUint8 = new TextEncoder().encode(data.substring(0, 1000)); // Use first 1000 chars for performance
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
   const processImageFile = (file: File) => {
     setResultImage(null);
     setError(null);
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       if (event.target?.result) {
-        setSourceImage(event.target.result as string);
+        const imageData = event.target.result as string;
+        const imageHash = await calculateImageHash(imageData);
+        
+        if (imageHash === currentImageHash) {
+          setError("This appears to be the same image you already uploaded. Try a different image for better results.");
+          return;
+        }
+        
+        setCurrentImageHash(imageHash);
+        setSourceImage(imageData);
       }
     };
     reader.onerror = () => {
@@ -124,7 +142,7 @@ export default function GhiblifyPage() {
         },
         body: JSON.stringify({
           imageBase64: sourceImage,
-          prompt: `${selectedStyle} style ${prompt || "illustration"}`,
+          prompt: "recreate this image in the style of ghibli",
         }),
       });
 
@@ -192,6 +210,7 @@ export default function GhiblifyPage() {
     setResultImage(null);
     setPrompt("");
     setError(null);
+    setCurrentImageHash(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

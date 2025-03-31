@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server';
 import Replicate from 'replicate';
 
+async function uploadImageToCloudinary(base64Image: string) {
+  try {
+    const formData = new FormData();
+    formData.append('file', base64Image);
+    formData.append('upload_preset', process.env.CLOUDINARY_UPLOAD_PRESET || 'ml_default');
+    
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+    
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error);
+    throw new Error('Failed to upload image');
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const replicate = new Replicate({
@@ -17,29 +39,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const enhancedPrompt = prompt || "Illustration in the style of TOK";
-
+    const enhancedPrompt = prompt || "recreate this image in the style of ghibli";
+    
     console.log("Starting Ghiblify process with prompt:", enhancedPrompt);
-    console.log("Input image provided as base64");
+    
+    const imageUrl = await uploadImageToCloudinary(imageBase64);
+    console.log("Image uploaded to:", imageUrl);
     
     const output = await replicate.run(
-      "grabielairu/ghibli:4b82bb7dbb3b153882a0c34d7f2cbc4f7012ea7eaddb4f65c257a3403c9b3253",
+      "colinmcdonnell22/ghiblify:b4014c6ade5c1ac4c0d90ee5ea26ee9cf56ad28ee8a705737a0be6cdfdc3ac2a",
       {
         input: {
-          image: imageBase64,
-          width: 1024,
-          height: 1024,
-          prompt: enhancedPrompt,
-          refine: "no_refiner",
-          scheduler: "K_EULER",
-          lora_scale: 0.6,
+          image: imageUrl,
+          model: "dev",
+          prompt: "recreate this image in the style of ghibli",
+          go_fast: false,
+          lora_scale: 0.95,
+          megapixels: "1",
           num_outputs: 1,
-          guidance_scale: 7.5,
-          apply_watermark: true,
-          high_noise_frac: 0.8,
-          negative_prompt: "",
-          prompt_strength: 0.8,
-          num_inference_steps: 50
+          aspect_ratio: "1:1",
+          output_format: "jpg",
+          guidance_scale: 3.5,
+          output_quality: 100,
+          prompt_strength: 0.65,
+          extra_lora_scale: 1,
+          num_inference_steps: 32
         }
       }
     );
