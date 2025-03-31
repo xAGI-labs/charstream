@@ -30,7 +30,7 @@ Please provide the following in JSON format:
 3. "isValidCharacter": Boolean indicating if this is appropriate content (false if it contains inappropriate, offensive, or harmful content).`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
