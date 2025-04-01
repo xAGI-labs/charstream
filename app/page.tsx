@@ -42,25 +42,9 @@ export default function Home() {
     return () => clearTimeout(timeoutId)
   }, [])
 
-  // Schema.org structured data for better SEO
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "Chatstream.xyz",
-    "applicationCategory": "EntertainmentApplication",
-    "description": "Create and chat with AI characters that feel real. Bring your favorite fictional characters to life or create entirely new ones.",
-    "operatingSystem": "Web",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "url": "https://chatstream.xyz"
-  }
-
   return (      
       <div className="flex h-screen bg-background">
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1">
           {!isMobile && <Header />}
           <main className="container max-w-7xl mx-auto px-4 pb-16">
             <h1 className="sr-only">Chatstream.xyz - Create and Chat with AI Characters</h1>

@@ -21,7 +21,7 @@ export function RootLayoutContent({
 
   return (
     <ThemeContextProvider>
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background">
       {/* Desktop sidebar - hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar 

@@ -30,17 +30,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Chatstream.xyz - Create AI Characters and Chat With Them",
-    description: "Create custom AI characters, chat with popular fictional personalities, and bring your imagination to life with Chatstream.xyz",
-    images: ["https://chatstream.xyz/twitter-image.jpg"],
-  },
   robots: "index, follow",
-  themeColor: "#ffffff",
-  alternates: {
-    canonical: "https://chatstream.xyz",
-  },
 }
 
 
