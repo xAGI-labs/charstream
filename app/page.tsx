@@ -58,15 +58,7 @@ export default function Home() {
     "url": "https://chatstream.xyz"
   }
 
-  return (
-    <>
-      {/* Structured data for search engines */}
-      <Script
-        id="structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      
+  return (      
       <div className="flex h-screen bg-background">
         <div className="flex-1 overflow-auto">
           {!isMobile && <Header />}
@@ -97,7 +89,6 @@ export default function Home() {
         </div>
         <SignupDialog open={isOpen} onOpenChange={setIsOpen} />
       </div>
-    </>
   )
 }
 
