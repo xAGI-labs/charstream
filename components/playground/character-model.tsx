@@ -7,12 +7,13 @@ import { useRouter } from "next/navigation"
 import { Character } from "@/types/character"
 import * as THREE from "three"
 import { useSpring, animated } from "@react-spring/three"
+import { toast } from "sonner"
 
 interface CharacterModelProps {
   character: Character
   position: [number, number, number]
-  moveRadius?: number // How far the character can wander from its starting position
-  moveSpeed?: number // How fast the character moves
+  moveRadius?: number 
+  moveSpeed?: number 
 }
 
 export function CharacterModel({ 
@@ -26,9 +27,8 @@ export function CharacterModel({
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
-  const [walkCycle, setWalkCycle] = useState(Math.random() * Math.PI * 2) // Randomize starting phase
+  const [walkCycle, setWalkCycle] = useState(Math.random() * Math.PI * 2) 
   
-  // Store original position and movement target
   const originalPos = useRef<THREE.Vector3>(new THREE.Vector3(...position))
   const targetPos = useRef<THREE.Vector3>(new THREE.Vector3(...position))
   const movementAngle = useRef<number>(Math.random() * Math.PI * 2)
@@ -36,75 +36,71 @@ export function CharacterModel({
   const idleTime = useRef<number>(0)
   const avoidanceVector = useRef<THREE.Vector3>(new THREE.Vector3())
   
-  // Spring animation for hover effect
   const { scale } = useSpring({
     scale: hovered ? 1.1 : 1,
     config: { tension: 300, friction: 10 }
   })
   
-  // Generate a consistent color based on character name
-  const getColorFromName = (name: string) => {
+  const getColorFromName = (name: string, saturation = 70, lightness = 60) => {
     const hash = name.split('').reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc)
     }, 0)
     
     const hue = Math.abs(hash % 360)
-    return `hsl(${hue}, 70%, 60%)`
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`
   }
   
-  const bodyColor = getColorFromName(character.name)
+  const characterColors = {
+    primary: getColorFromName(character.name),
+    secondary: getColorFromName(character.name, 60, 40),
+    accent: getColorFromName(character.name + "accent", 80, 70),
+    hair: getColorFromName(character.name + "hair", 40, 30)
+  }
   
-  // Character personality traits (derived from name hash)
   const personalityTraits = useRef({
-    nervousness: (character.name.charCodeAt(0) % 10) / 10, // 0-1 scale
-    speed: moveSpeed * (0.8 + (character.name.charCodeAt(0) % 5) / 10), // Slightly vary speed
-    pauseFrequency: 0.3 + (character.name.charCodeAt(0) % 5) / 10, // How often they pause
+    nervousness: (character.name.charCodeAt(0) % 10) / 10, 
+    speed: moveSpeed * (0.8 + (character.name.charCodeAt(0) % 5) / 10), 
+    pauseFrequency: 0.3 + (character.name.charCodeAt(0) % 5) / 10,
+    hairStyle: Math.floor(character.name.charCodeAt(0) % 3), 
+    hasGlasses: character.name.charCodeAt(0) % 5 === 0, 
+    hasHat: character.name.charCodeAt(0) % 7 === 0, 
   })
   
-  // Determine new random target position for character movement
   const pickNewTarget = (time: number, shouldIdle: boolean = false) => {
     if (!groupRef.current) return
     
-    // Chance to idle based on personality
     if (shouldIdle || Math.random() < personalityTraits.current.pauseFrequency) {
       setIsMoving(false)
-      idleTime.current = time + 1 + Math.random() * 3 // Idle for 1-4 seconds
-      nextMoveTime.current = idleTime.current // Next movement after idle
+      idleTime.current = time + 1 + Math.random() * 3
+      nextMoveTime.current = idleTime.current
       return
     }
     
     setIsMoving(true)
-    // Set next movement time - more nervous characters change direction more often
     const moveDuration = 3 + (1 - personalityTraits.current.nervousness) * 5
-    nextMoveTime.current = time + moveDuration // Move for 3-8 seconds
+    nextMoveTime.current = time + moveDuration 
     
-    // Randomize the movement angle with slight bias toward original position if far away
     const currentPos = groupRef.current.position
     const distanceFromOrigin = new THREE.Vector2(
       currentPos.x - originalPos.current.x,
       currentPos.z - originalPos.current.z
     ).length()
     
-    // If too far from origin, bias movement back toward it
     let angleToOrigin = Math.atan2(
       originalPos.current.z - currentPos.z,
       originalPos.current.x - currentPos.x
     )
     
-    // Mix between random angle and origin angle based on distance
     const returnBias = Math.min(1, distanceFromOrigin / (moveRadius * 1.2))
     const randomAngle = Math.random() * Math.PI * 2
     movementAngle.current = randomAngle * (1 - returnBias) + angleToOrigin * returnBias
     
-    // Add some randomness
     movementAngle.current += (Math.random() - 0.5) * Math.PI / 4
     
-    // Calculate new target position
     const randomDistance = (0.5 + Math.random() * 0.5) * moveRadius
     let newX = currentPos.x + Math.cos(movementAngle.current) * randomDistance
     let newZ = currentPos.z + Math.sin(movementAngle.current) * randomDistance
     
-    // Ensure character doesn't wander too far
     const distanceLimit = moveRadius * 1.5
     const dx = newX - originalPos.current.x
     const dz = newZ - originalPos.current.z
@@ -119,98 +115,107 @@ export function CharacterModel({
     targetPos.current.set(newX, position[1], newZ)
   }
   
-  // Character animation and movement
   useFrame((state, delta) => {
     if (!groupRef.current) return
     
     const time = state.clock.getElapsedTime()
     
-    // Update walk cycle for animations if moving
     if (isMoving) {
-      // Characters walk at different speeds based on personality
       const walkSpeed = 5 + personalityTraits.current.nervousness * 4
       setWalkCycle((prev) => (prev + delta * walkSpeed) % (Math.PI * 2))
     }
     
-    // Check if it's time to pick a new target position
     if (time > nextMoveTime.current) {
       pickNewTarget(time)
     } else if (time > idleTime.current && !isMoving) {
-      // If idle time has passed, start moving again
       pickNewTarget(time, false)
     }
     
-    // Move character towards target position
     const currentPos = groupRef.current.position
     const distanceToTarget = new THREE.Vector2(
       targetPos.current.x - currentPos.x,
       targetPos.current.z - currentPos.z
     ).length()
     
-    // Only move if not too close to target and not idling
     if (distanceToTarget > 0.1 && isMoving) {
-      // Calculate movement vector
       const moveVector = new THREE.Vector3(
         targetPos.current.x - currentPos.x,
         0,
         targetPos.current.z - currentPos.z
       ).normalize()
       
-      // Apply personality-based speed variations
       const actualSpeed = personalityTraits.current.speed * delta
       
-      // Add avoidance vector (decays over time)
-      avoidanceVector.current.multiplyScalar(0.9) // Decay
+      avoidanceVector.current.multiplyScalar(0.9)
       moveVector.add(avoidanceVector.current)
       moveVector.normalize().multiplyScalar(actualSpeed)
       
-      // Update position with acceleration/deceleration
       currentPos.x += moveVector.x
       currentPos.z += moveVector.z
       
-      // Apply bobbing - the bobbing amount varies based on personality
       const bobAmount = Math.sin(walkCycle) * 0.04 * (1 + personalityTraits.current.nervousness)
       currentPos.y = position[1] + bobAmount
       
-      // Update rotation to face movement direction with anticipation
       const targetAngle = Math.atan2(moveVector.z, moveVector.x)
       const currentRotation = groupRef.current.rotation.y
       
-      // Smooth rotation
       const rotationSpeed = 10 * delta
       const angleDiff = (targetAngle - currentRotation + Math.PI * 3) % (Math.PI * 2) - Math.PI
       groupRef.current.rotation.y = currentRotation + angleDiff * Math.min(1, rotationSpeed)
     } else {
-      // Just apply slight bobbing when idle
       const idleBobbing = Math.sin(time * 1.5) * 0.015
       currentPos.y = position[1] + idleBobbing
     }
     
-    // When hovered, override rotation
     if (hovered) {
       groupRef.current.rotation.y += 0.03
     }
   })
   
-  // Handle character click
-  const handleClick = () => {
+  const handleClick = async () => {
     if (clicked) return
     
     setClicked(true)
-    setTimeout(() => {
-      router.push(`/chat/${character.id}`)
-    }, 500)
+    
+    try {
+      const response = await fetch("/api/conversations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ characterId: character.id }),
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to create conversation")
+      }
+      
+      const data = await response.json()
+      
+      router.push(`/chat/${data.id}`)
+    } catch (error) {
+      console.error("Error creating conversation:", error)
+      toast.error("Failed to start conversation")
+      setClicked(false)
+    }
   }
   
-  // Initialize movement
   useEffect(() => {
-    // Set initial target to the starting position
     originalPos.current.set(...position)
     targetPos.current.set(...position)
     
-    // Set first movement time
-    nextMoveTime.current = Math.random() * 2 // Start moving after 0-2 seconds
+    nextMoveTime.current = Math.random() * 2
   }, [position])
+
+  const shimmerRef = useRef<THREE.Mesh>(null)
+  useFrame(({ clock }) => {
+    if (shimmerRef.current && hovered) {
+      shimmerRef.current.rotation.y = clock.getElapsedTime() * 2
+      
+      const material = shimmerRef.current.material as THREE.MeshStandardMaterial
+      material.opacity = 0.1 + Math.sin(clock.getElapsedTime() * 3) * 0.05
+    }
+  })
 
   return (
     <group 
@@ -220,72 +225,204 @@ export function CharacterModel({
       onPointerOut={() => setHovered(false)}
       onClick={handleClick}
     >
-      {/* Character Minecraft-style model */}
       <animated.group scale={scale}>
-        {/* Body */}
-        <mesh castShadow>
-          <boxGeometry args={[0.6, 0.8, 0.3]} />
-          <meshStandardMaterial color={bodyColor} />
+        {hovered && (
+          <mesh ref={shimmerRef} position={[0, 0.7, 0]} scale={1.3}>
+            <sphereGeometry args={[0.6, 16, 16]} />
+            <meshStandardMaterial 
+              color="#ffffff" 
+              transparent 
+              opacity={0.15} 
+              emissive="#ffffff"
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+        )}
+
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.45, 0]} receiveShadow>
+          <circleGeometry args={[0.4, 16]} />
+          <meshBasicMaterial color="black" transparent opacity={0.2} />
+        </mesh>
+
+        <mesh castShadow position={[0, 0, 0]}>
+          <capsuleGeometry args={[0.35, 0.7, 8, 16]} />
+          <meshStandardMaterial 
+            color={characterColors.primary} 
+            roughness={0.6}
+            metalness={0.1}
+          />
+        </mesh>
+
+        <mesh castShadow position={[0, 0.05, 0.18]} scale={[0.9, 0.75, 0.5]}>
+          <boxGeometry args={[0.8, 0.8, 0.3]} />
+          <meshStandardMaterial 
+            color={characterColors.secondary}
+            roughness={0.8}
+            metalness={0}
+          />
         </mesh>
         
-        {/* Head with slight animation */}
-        <mesh 
-          castShadow 
-          position={[0, 0.65, 0]}
+        <group position={[0, 0.7, 0]}>
+          <mesh castShadow>
+            <sphereGeometry args={[0.3, 16, 16]} />
+            <meshStandardMaterial 
+              color="#ffdbac" 
+              roughness={0.6}
+              metalness={0}
+            />
+          </mesh>
+          
+          <mesh position={[0.12, 0.05, 0.2]} rotation={[0, 0, 0]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          <mesh position={[0.12, 0.05, 0.24]} rotation={[0, 0, 0]} scale={0.5}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="black" />
+          </mesh>
+          
+          <mesh position={[-0.12, 0.05, 0.2]} rotation={[0, 0, 0]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          <mesh position={[-0.12, 0.05, 0.24]} rotation={[0, 0, 0]} scale={0.5}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="black" />
+          </mesh>
+          
+          {personalityTraits.current.hairStyle === 0 && (
+            <mesh position={[0, 0.2, 0]}>
+              <sphereGeometry args={[0.32, 16, 16]} />
+              <meshStandardMaterial 
+                color={characterColors.hair}
+                roughness={0.8}
+              />
+            </mesh>
+          )}
+          
+          {personalityTraits.current.hairStyle === 1 && (
+            <mesh position={[0, 0.15, -0.05]}>
+              <boxGeometry args={[0.65, 0.2, 0.5]} />
+              <meshStandardMaterial 
+                color={characterColors.hair}
+                roughness={0.8}
+              />
+            </mesh>
+          )}
+          
+          {personalityTraits.current.hairStyle === 2 && (
+            <>
+              <mesh position={[0, 0.15, 0]} rotation={[0.2, 0, 0]}>
+                <cylinderGeometry args={[0.35, 0.3, 0.4, 16]} />
+                <meshStandardMaterial 
+                  color={characterColors.hair}
+                  roughness={0.8}
+                />
+              </mesh>
+              <mesh position={[0, 0.35, 0]} scale={[0.5, 0.3, 0.5]}>
+                <torusGeometry args={[0.3, 0.1, 8, 16]} />
+                <meshStandardMaterial 
+                  color={characterColors.hair}
+                  roughness={0.8}
+                />
+              </mesh>
+            </>
+          )}
+          
+          {personalityTraits.current.hasGlasses && (
+            <group position={[0, 0.05, 0.25]}>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[0.35, 0.1, 0.05]} />
+                <meshStandardMaterial color="#333333" metalness={0.8} />
+              </mesh>
+              <mesh position={[0.15, 0, 0]}>
+                <torusGeometry args={[0.08, 0.02, 8, 16]} />
+                <meshStandardMaterial color="#333333" metalness={0.8} />
+              </mesh>
+              <mesh position={[-0.15, 0, 0]}>
+                <torusGeometry args={[0.08, 0.02, 8, 16]} />
+                <meshStandardMaterial color="#333333" metalness={0.8} />
+              </mesh>
+            </group>
+          )}
+          
+          {personalityTraits.current.hasHat && (
+            <group position={[0, 0.25, 0]}>
+              <mesh position={[0, 0.05, 0]}>
+                <cylinderGeometry args={[0.35, 0.35, 0.1, 16]} />
+                <meshStandardMaterial color={characterColors.accent} />
+              </mesh>
+              <mesh position={[0, 0.15, 0]}>
+                <cylinderGeometry args={[0.25, 0.25, 0.2, 16]} />
+                <meshStandardMaterial color={characterColors.accent} />
+              </mesh>
+            </group>
+          )}
+        </group>
+        
+        <group
+          position={[0.4, 0.2, 0]}
           rotation={[
-            Math.sin(walkCycle * 0.5) * 0.1 * (isMoving ? 1 : 0.2),
-            Math.sin(walkCycle * 0.4) * 0.1 * (isMoving ? 0.5 : 0.3),
-            0
+            isMoving ? Math.sin(walkCycle) * 0.5 : Math.sin(walkCycle * 0.3) * 0.1,
+            0,
+            isMoving ? Math.sin(walkCycle * 0.5) * 0.1 : 0
           ]}
         >
-          <boxGeometry args={[0.4, 0.4, 0.4]} />
-          <meshStandardMaterial color="#ffcc88" />
-        </mesh>
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.5, 8, 8]} />
+            <meshStandardMaterial color={characterColors.primary} roughness={0.6} />
+          </mesh>
+        </group>
         
-        {/* Arms with walking animation */}
-        <mesh 
-          castShadow 
-          position={[0.35, 0, 0]} 
-          rotation={[isMoving ? Math.sin(walkCycle) * 0.7 : Math.sin(walkCycle * 0.3) * 0.1, 0, 0]}
+        <group
+          position={[-0.4, 0.2, 0]}
+          rotation={[
+            isMoving ? -Math.sin(walkCycle) * 0.5 : Math.sin(walkCycle * 0.3 + 0.5) * 0.1,
+            0,
+            isMoving ? -Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
         >
-          <boxGeometry args={[0.1, 0.6, 0.1]} />
-          <meshStandardMaterial color={bodyColor} />
-        </mesh>
-        <mesh 
-          castShadow 
-          position={[-0.35, 0, 0]} 
-          rotation={[isMoving ? -Math.sin(walkCycle) * 0.7 : Math.sin(walkCycle * 0.3 + 0.5) * 0.1, 0, 0]}
-        >
-          <boxGeometry args={[0.1, 0.6, 0.1]} />
-          <meshStandardMaterial color={bodyColor} />
-        </mesh>
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.5, 8, 8]} />
+            <meshStandardMaterial color={characterColors.primary} roughness={0.6} />
+          </mesh>
+        </group>
         
-        {/* Legs with walking animation */}
-        <mesh 
-          castShadow 
-          position={[0.15, -0.6, 0]} 
-          rotation={[isMoving ? -Math.sin(walkCycle) * 0.5 : 0, 0, 0]}
+        <group
+          position={[0.15, -0.5, 0]}
+          rotation={[
+            isMoving ? Math.sin(walkCycle) * 0.7 : 0,
+            0,
+            isMoving ? Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
         >
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#555555" />
-        </mesh>
-        <mesh 
-          castShadow 
-          position={[-0.15, -0.6, 0]} 
-          rotation={[isMoving ? Math.sin(walkCycle) * 0.5 : 0, 0, 0]}
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.4, 8, 8]} />
+            <meshStandardMaterial color={characterColors.secondary} roughness={0.7} />
+          </mesh>
+        </group>
+        
+        <group
+          position={[-0.15, -0.5, 0]}
+          rotation={[
+            isMoving ? -Math.sin(walkCycle) * 0.7 : 0,
+            0,
+            isMoving ? -Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
         >
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#555555" />
-        </mesh>
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.4, 8, 8]} />
+            <meshStandardMaterial color={characterColors.secondary} roughness={0.7} />
+          </mesh>
+        </group>
       </animated.group>
       
-      {/* Character name label */}
       <Html
         position={[0, 1.2, 0]}
         center
         distanceFactor={10}
       >
-        <div className={`px-2 py-1 rounded-lg text-center text-sm font-bold ${hovered ? 'bg-yellow-300' : 'bg-white/80'}`}>
+        <div className={`px-2 py-1 rounded-lg text-center text-sm text-black font-bold ${hovered ? 'bg-yellow-300' : 'bg-white/80'}`}>
           {character.name}
         </div>
       </Html>

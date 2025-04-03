@@ -31,7 +31,7 @@ export function PlayerController() {
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault()
     }
-
+    
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("contextmenu", handleContextMenu)
     
@@ -61,25 +61,28 @@ export function PlayerController() {
     
     // Create movement direction based on player rotation
     const direction = new Vector3()
+    
+    // IMPROVED: Fixed directional controls to properly align with camera view
     const frontVector = new Vector3(0, 0, forward ? -1 : backward ? 1 : 0)
     const sideVector = new Vector3(left ? -1 : right ? 1 : 0, 0, 0)
     
     direction
-      .subVectors(frontVector, sideVector)
+      .addVectors(frontVector, sideVector) // Changed from subVectors to addVectors for correct movement
       .normalize()
-      .multiplyScalar(5 * delta) // Increased from 2.5 to 5 for faster movement
+      .multiplyScalar(10 * delta) // Increased from 5 to 10 for faster movement
       .applyAxisAngle(new Vector3(0, 1, 0), playerRotation)
     
     // Apply movement with improved acceleration/deceleration
     const velocity = rigidBodyRef.current.linvel()
     
-    // Target velocity based on input
-    const targetVelX = direction.x * 15 // Increased from 5 to 15
-    const targetVelZ = direction.z * 15 // Increased from 5 to 15
+    // IMPROVED: Increased speed for faster movement
+    const targetVelX = direction.x * 25 // Increased from 15 to 25
+    const targetVelZ = direction.z * 25 // Increased from 15 to 25
     
     // Apply smooth acceleration/deceleration
-    const newVelX = velocity.x + (targetVelX - velocity.x) * Math.min(1, delta * 10)
-    const newVelZ = velocity.z + (targetVelZ - velocity.z) * Math.min(1, delta * 10)
+    const accelerationFactor = 15 // Increased for more responsive controls
+    const newVelX = velocity.x + (targetVelX - velocity.x) * Math.min(1, delta * accelerationFactor)
+    const newVelZ = velocity.z + (targetVelZ - velocity.z) * Math.min(1, delta * accelerationFactor)
     
     rigidBodyRef.current.setLinvel(
       { x: newVelX, y: velocity.y, z: newVelZ },
@@ -95,7 +98,7 @@ export function PlayerController() {
       
       // Simple ground check based on position
       if (Math.abs(velocity.y) < 0.1) {
-        rigidBodyRef.current.setLinvel({ x: velocity.x, y: 8, z: velocity.z }, true) // Higher jump
+        rigidBodyRef.current.setLinvel({ x: velocity.x, y: 10, z: velocity.z }, true) // Higher jump (8 → 10)
       }
     }
     
@@ -106,8 +109,8 @@ export function PlayerController() {
     const targetPosition = new Vector3()
     const bodyPosition = new Vector3(position.x, position.y + 1, position.z)
     
-    // Position camera based on player rotation
-    const cameraOffset = new Vector3(0, 1.5, 5).applyAxisAngle(new Vector3(0, 1, 0), playerRotation)
+    // IMPROVED: Adjusted camera offset for better view
+    const cameraOffset = new Vector3(0, 2, 6).applyAxisAngle(new Vector3(0, 1, 0), playerRotation)
     targetPosition.copy(bodyPosition).add(cameraOffset)
     
     // Add subtle head bob when moving
@@ -121,13 +124,23 @@ export function PlayerController() {
       new Vector3(0, 0.25, -3).applyAxisAngle(new Vector3(0, 1, 0), playerRotation)
     )
     
-    // Apply smooth camera movement with faster response
-    smoothedCameraPosition.lerp(targetPosition, Math.min(1, 8 * delta))
-    smoothedCameraTarget.lerp(cameraTarget, Math.min(1, 8 * delta))
+    // IMPROVED: Faster camera response for more responsive controls
+    const cameraLerpFactor = 12 * delta // Increased from 8 to 12
+    smoothedCameraPosition.lerp(targetPosition, Math.min(1, cameraLerpFactor))
+    smoothedCameraTarget.lerp(cameraTarget, Math.min(1, cameraLerpFactor))
     
     state.camera.position.copy(smoothedCameraPosition)
     state.camera.lookAt(smoothedCameraTarget)
   })
+
+  // Player colors - a nice blue palette
+  const playerColors = {
+    primary: "#4a7bce", // Main body color - richer blue
+    secondary: "#234789", // Darker blue for pants/secondary elements
+    skin: "#ffe0bd",    // Warm skin tone
+    hair: "#5d3d1c",    // Brown hair
+    accent: "#f3d78e"   // Gold/yellow accent color
+  }
 
   return (
     <RigidBody
@@ -137,58 +150,186 @@ export function PlayerController() {
       mass={1}
       type="dynamic"
       lockRotations={false}
-      friction={0.2} // Reduced friction for more responsive movement
+      friction={0.1} // Reduced friction for more responsive movement
       restitution={0.05}
-      linearDamping={0.9} // Increased damping for less sliding
+      linearDamping={0.7} // Reduced damping for less sluggish movement
       angularDamping={0.9}
       colliders={false}
     >
       <CylinderCollider args={[0.8, 0.4]} />
       
-      {/* Player Avatar with walking animation */}
+      {/* Player Avatar with improved model and animations */}
       <group rotation-y={playerRotation}>
-        {/* Body */}
-        <mesh castShadow>
-          <boxGeometry args={[0.6, 0.8, 0.3]} />
-          <meshStandardMaterial color="#5588ff" />
+        {/* Base/Shadow */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.45, 0]} receiveShadow>
+          <circleGeometry args={[0.4, 16]} />
+          <meshBasicMaterial color="black" transparent opacity={0.2} />
+        </mesh>
+
+        {/* Body - improved with capsule geometry */}
+        <mesh castShadow position={[0, 0, 0]}>
+          <capsuleGeometry args={[0.35, 0.7, 8, 16]} />
+          <meshStandardMaterial 
+            color={playerColors.primary}
+            roughness={0.6}
+            metalness={0.1}
+          />
+        </mesh>
+
+        {/* Shirt details */}
+        <mesh castShadow position={[0, 0.05, 0.18]} scale={[0.9, 0.75, 0.5]}>
+          <boxGeometry args={[0.8, 0.8, 0.3]} />
+          <meshStandardMaterial 
+            color={playerColors.primary}
+            roughness={0.8}
+            metalness={0}
+          />
+        </mesh>
+
+        {/* Jacket/vest - additional clothing detail */}
+        <mesh castShadow position={[0, 0.1, 0.21]} scale={[0.7, 0.6, 0.4]}>
+          <boxGeometry args={[0.85, 0.5, 0.2]} />
+          <meshStandardMaterial 
+            color={playerColors.accent}
+            roughness={0.7}
+            metalness={0.2}
+          />
         </mesh>
         
-        {/* Head */}
-        <mesh castShadow position={[0, 0.65, 0]}>
-          <boxGeometry args={[0.4, 0.4, 0.4]} />
-          <meshStandardMaterial color="#ffcc88" />
+        {/* Head with improved details */}
+        <group position={[0, 0.7, 0]}>
+          <mesh castShadow>
+            <sphereGeometry args={[0.3, 16, 16]} />
+            <meshStandardMaterial 
+              color={playerColors.skin}
+              roughness={0.6}
+              metalness={0}
+            />
+          </mesh>
+          
+          {/* Eyes */}
+          <mesh position={[0.12, 0.05, 0.2]} rotation={[0, 0, 0]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          <mesh position={[0.12, 0.05, 0.24]} rotation={[0, 0, 0]} scale={0.5}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="#1e90ff" /> {/* Blue eyes */}
+          </mesh>
+          
+          <mesh position={[-0.12, 0.05, 0.2]} rotation={[0, 0, 0]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          <mesh position={[-0.12, 0.05, 0.24]} rotation={[0, 0, 0]} scale={0.5}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="#1e90ff" /> {/* Blue eyes */}
+          </mesh>
+
+          {/* Hair */}
+          <mesh position={[0, 0.18, 0]} scale={[1.05, 0.7, 1.05]}>
+            <sphereGeometry args={[0.3, 16, 16]} />
+            <meshStandardMaterial 
+              color={playerColors.hair}
+              roughness={0.9}
+              metalness={0}
+            />
+          </mesh>
+        </group>
+        
+        {/* Arms with improved geometry and animations */}
+        <group
+          position={[0.4, 0.2, 0]}
+          rotation={[
+            isMoving ? Math.sin(walkCycle) * 0.5 : Math.sin(walkCycle * 0.3) * 0.1,
+            0,
+            isMoving ? Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
+        >
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.5, 8, 8]} />
+            <meshStandardMaterial 
+              color={playerColors.primary}
+              roughness={0.6}
+              metalness={0.1}
+            />
+          </mesh>
+        </group>
+        
+        <group
+          position={[-0.4, 0.2, 0]}
+          rotation={[
+            isMoving ? -Math.sin(walkCycle) * 0.5 : Math.sin(walkCycle * 0.3 + 0.5) * 0.1,
+            0,
+            isMoving ? -Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
+        >
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.5, 8, 8]} />
+            <meshStandardMaterial 
+              color={playerColors.primary}
+              roughness={0.6}
+              metalness={0.1}
+            />
+          </mesh>
+        </group>
+        
+        {/* Legs with improved geometry and animations */}
+        <group
+          position={[0.15, -0.5, 0]}
+          rotation={[
+            isMoving ? -Math.sin(walkCycle) * 0.7 : 0,
+            0,
+            isMoving ? Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
+        >
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.4, 8, 8]} />
+            <meshStandardMaterial 
+              color={playerColors.secondary}
+              roughness={0.7}
+              metalness={0}
+            />
+          </mesh>
+        </group>
+        
+        <group
+          position={[-0.15, -0.5, 0]}
+          rotation={[
+            isMoving ? Math.sin(walkCycle) * 0.7 : 0,
+            0,
+            isMoving ? -Math.sin(walkCycle * 0.5) * 0.1 : 0
+          ]}
+        >
+          <mesh castShadow>
+            <capsuleGeometry args={[0.1, 0.4, 8, 8]} />
+            <meshStandardMaterial 
+              color={playerColors.secondary}
+              roughness={0.7}
+              metalness={0}
+            />
+          </mesh>
+        </group>
+        
+        {/* Shoes */}
+        <mesh 
+          position={[0.15, -0.75, 0.05]} 
+          rotation={[0.2, 0, 0]} 
+          scale={[0.13, 0.1, 0.3]} 
+          castShadow
+        >
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#222222" roughness={0.9} />
         </mesh>
         
-        {/* Arms with walking animation */}
-        <mesh castShadow 
-          position={[0.35, 0, 0]} 
-          rotation={[isMoving ? Math.sin(walkCycle) * 0.5 : 0, 0, 0]}
+        <mesh 
+          position={[-0.15, -0.75, 0.05]} 
+          rotation={[0.2, 0, 0]} 
+          scale={[0.13, 0.1, 0.3]} 
+          castShadow
         >
-          <boxGeometry args={[0.1, 0.6, 0.1]} />
-          <meshStandardMaterial color="#5588ff" />
-        </mesh>
-        <mesh castShadow 
-          position={[-0.35, 0, 0]}
-          rotation={[isMoving ? -Math.sin(walkCycle) * 0.5 : 0, 0, 0]}
-        >
-          <boxGeometry args={[0.1, 0.6, 0.1]} />
-          <meshStandardMaterial color="#5588ff" />
-        </mesh>
-        
-        {/* Legs with walking animation */}
-        <mesh castShadow 
-          position={[0.15, -0.6, 0]}
-          rotation={[isMoving ? -Math.sin(walkCycle) * 0.5 : 0, 0, 0]}
-        >
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#3366cc" />
-        </mesh>
-        <mesh castShadow 
-          position={[-0.15, -0.6, 0]}
-          rotation={[isMoving ? Math.sin(walkCycle) * 0.5 : 0, 0, 0]}
-        >
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshStandardMaterial color="#3366cc" />
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#222222" roughness={0.9} />
         </mesh>
       </group>
     </RigidBody>

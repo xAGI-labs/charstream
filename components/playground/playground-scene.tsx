@@ -25,9 +25,9 @@ function getRandomPosition(type: 'home' | 'user'): [number, number, number] {
   // Get a random angle
   const angle = Math.random() * Math.PI * 2
   
-  // Get a random distance from center (between 5 and 20 units)
+  // Get a random distance from center (increased range)
   // This creates more natural spacing with characters both near and far
-  const distance = 5 + Math.random() * 15
+  const distance = 10 + Math.random() * 40 // Increased from 5-20 to 10-50
   
   // Calculate position
   let x = Math.cos(angle) * distance
@@ -35,12 +35,13 @@ function getRandomPosition(type: 'home' | 'user'): [number, number, number] {
   
   // Bias the position based on character type (home or user)
   // Home characters tend to be on the positive X side, user characters on negative X
+  // With increased distance between them
   if (type === 'home') {
-    x = Math.abs(x) * 0.8 + 5 // bias towards positive X
-    z = z * 0.8 + Math.random() * 6 - 3 // slightly randomized Z
+    x = Math.abs(x) * 0.8 + 15 // bias towards positive X, moved further out
+    z = z * 0.8 + Math.random() * 20 - 10 // more randomized Z
   } else {
-    x = -Math.abs(x) * 0.8 - 5 // bias towards negative X
-    z = z * 0.8 + Math.random() * 6 - 3 // slightly randomized Z
+    x = -Math.abs(x) * 0.8 - 15 // bias towards negative X, moved further out
+    z = z * 0.8 + Math.random() * 20 - 10 // more randomized Z
   }
   
   return [x, 0.5, z]
@@ -50,14 +51,16 @@ export function PlaygroundScene() {
   const [debug, setDebug] = useState(false)
   const { homeCharacters, userCharacters, loading, error } = usePlaygroundCharacters()
   
-  // Generate stable random positions for each character
+  // Generate stable random positions for each character with increased spacing
   // We use useMemo to ensure positions don't change on re-renders
   const homeCharacterPositions = useMemo(() => {
-    return Array.from({ length: 20 }).map(() => getRandomPosition('home'))
+    // Generate more positions to ensure we have enough for all characters
+    return Array.from({ length: 40 }).map(() => getRandomPosition('home'))
   }, [])
   
   const userCharacterPositions = useMemo(() => {
-    return Array.from({ length: 20 }).map(() => getRandomPosition('user'))
+    // Generate more positions to ensure we have enough for all characters
+    return Array.from({ length: 40 }).map(() => getRandomPosition('user'))
   }, [])
   
   return (
@@ -111,7 +114,7 @@ export function PlaygroundScene() {
                     key={character.id}
                     character={character}
                     position={position}
-                    moveRadius={3 + Math.random() * 3} // Random movement radius
+                    moveRadius={5 + Math.random() * 5} // Increased from 3+3 to 5+5
                     moveSpeed={0.3 + Math.random() * 0.5} // Random movement speed
                   />
                 )
@@ -127,7 +130,7 @@ export function PlaygroundScene() {
                     key={character.id}
                     character={character}
                     position={position}
-                    moveRadius={2 + Math.random() * 2} // Random movement radius
+                    moveRadius={5 + Math.random() * 5} // Increased from 3+3 to 5+5
                     moveSpeed={0.2 + Math.random() * 0.3} // Random movement speed
                   />
                 )

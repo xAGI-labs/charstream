@@ -9,7 +9,7 @@ import { Html } from "@react-three/drei"
 export function PlaygroundEnvironment() {
   return (
     <group>
-      {/* Ground - Park-like ground */}
+      {/* Ground - Park-like ground with increased size */}
       <RigidBody type="fixed" friction={1}>
         <Ground position={[0, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]} />
       </RigidBody>
@@ -17,7 +17,7 @@ export function PlaygroundEnvironment() {
       {/* Park decorative elements */}
       <ParkElements />
       
-      {/* Boundaries to prevent falling */}
+      {/* Boundaries to prevent falling - pushed further out */}
       <Boundaries />
     </group>
   )
@@ -75,18 +75,18 @@ function InfoSign({ text }: { text: string }) {
 function Paths() {
   return (
     <group>
-      {/* Main cross paths */}
-      <Path position={[0, -0.48, 0]} rotation={[Math.PI/2, 0, 0]} width={3} length={60} />
-      <Path position={[0, -0.48, 0]} rotation={[Math.PI/2, 0, Math.PI/2]} width={3} length={60} />
+      {/* Main cross paths - increased length */}
+      <Path position={[0, -0.48, 0]} rotation={[Math.PI/2, 0, 0]} width={4} length={120} /> {/* Increased width and length */}
+      <Path position={[0, -0.48, 0]} rotation={[Math.PI/2, 0, Math.PI/2]} width={4} length={120} /> {/* Increased width and length */}
       
-      {/* Circular path */}
-      <CirclePath position={[0, -0.48, 0]} radius={12} segments={16} width={2} />
+      {/* Circular path - increased radius */}
+      <CirclePath position={[0, -0.48, 0]} radius={25} segments={24} width={3} /> {/* Increased radius, segments and width */}
       
-      {/* Diagonal paths */}
-      <Path position={[10, -0.48, 10]} rotation={[Math.PI/2, 0, Math.PI/4]} width={2} length={15} />
-      <Path position={[-10, -0.48, 10]} rotation={[Math.PI/2, 0, -Math.PI/4]} width={2} length={15} />
-      <Path position={[10, -0.48, -10]} rotation={[Math.PI/2, 0, -Math.PI/4]} width={2} length={15} />
-      <Path position={[-10, -0.48, -10]} rotation={[Math.PI/2, 0, Math.PI/4]} width={2} length={15} />
+      {/* Diagonal paths - increased length */}
+      <Path position={[20, -0.48, 20]} rotation={[Math.PI/2, 0, Math.PI/4]} width={3} length={30} /> {/* Repositioned and increased size */}
+      <Path position={[-20, -0.48, 20]} rotation={[Math.PI/2, 0, -Math.PI/4]} width={3} length={30} /> {/* Repositioned and increased size */}
+      <Path position={[20, -0.48, -20]} rotation={[Math.PI/2, 0, -Math.PI/4]} width={3} length={30} /> {/* Added new diagonal path */}
+      <Path position={[-20, -0.48, -20]} rotation={[Math.PI/2, 0, Math.PI/4]} width={3} length={30} /> {/* Added new diagonal path */}
     </group>
   )
 }
@@ -165,15 +165,23 @@ function Gazebo({ position }: { position: [number, number, number] }) {
 function Benches() {
   return (
     <group>
-      <Bench position={[5, 0, 5]} rotation={[0, Math.PI/4, 0]} />
-      <Bench position={[-5, 0, 5]} rotation={[0, -Math.PI/4, 0]} />
-      <Bench position={[5, 0, -5]} rotation={[0, -Math.PI/4, 0]} />
-      <Bench position={[-5, 0, -5]} rotation={[0, Math.PI/4, 0]} />
+      {/* Repositioned benches more spread out */}
+      <Bench position={[10, 0, 10]} rotation={[0, Math.PI/4, 0]} />
+      <Bench position={[-10, 0, 10]} rotation={[0, -Math.PI/4, 0]} />
+      <Bench position={[10, 0, -10]} rotation={[0, -Math.PI/4, 0]} />
+      <Bench position={[-10, 0, -10]} rotation={[0, Math.PI/4, 0]} />
       
-      <Bench position={[15, 0, 0]} rotation={[0, Math.PI/2, 0]} />
-      <Bench position={[-15, 0, 0]} rotation={[0, Math.PI/2, 0]} />
-      <Bench position={[0, 0, 15]} rotation={[0, 0, 0]} />
-      <Bench position={[0, 0, -15]} rotation={[0, 0, 0]} />
+      {/* Additional benches further out */}
+      <Bench position={[30, 0, 0]} rotation={[0, Math.PI/2, 0]} />
+      <Bench position={[-30, 0, 0]} rotation={[0, Math.PI/2, 0]} />
+      <Bench position={[0, 0, 30]} rotation={[0, 0, 0]} />
+      <Bench position={[0, 0, -30]} rotation={[0, 0, 0]} />
+      
+      {/* Even more benches in between */}
+      <Bench position={[20, 0, 20]} rotation={[0, Math.PI/3, 0]} />
+      <Bench position={[-20, 0, 20]} rotation={[0, -Math.PI/3, 0]} />
+      <Bench position={[20, 0, -20]} rotation={[0, -Math.PI/3, 0]} />
+      <Bench position={[-20, 0, -20]} rotation={[0, Math.PI/3, 0]} />
     </group>
   )
 }
@@ -207,19 +215,18 @@ function Bench({ position, rotation }: { position: [number, number, number], rot
 }
 
 function Trees() {
-  // Generate a lot more trees randomly positioned
   return (
     <group>
-      {/* Main decorative trees */}
-      <Tree position={[8, 0, 8]} scale={[1.2, 1.2, 1.2]} />
-      <Tree position={[-8, 0, -8]} scale={[0.8, 1.5, 0.8]} />
-      <Tree position={[12, 0, -5]} scale={[1, 1, 1]} />
-      <Tree position={[-10, 0, 6]} scale={[1.4, 1.1, 1.4]} />
+      {/* Main decorative trees - more spread out */}
+      <Tree position={[15, 0, 15]} scale={[1.2, 1.2, 1.2]} />
+      <Tree position={[-15, 0, -15]} scale={[0.8, 1.5, 0.8]} />
+      <Tree position={[20, 0, -10]} scale={[1, 1, 1]} />
+      <Tree position={[-20, 0, 10]} scale={[1.4, 1.1, 1.4]} />
       
-      {/* Random trees around the perimeter */}
-      {Array.from({ length: 30 }).map((_, i) => {
-        const angle = (i / 30) * Math.PI * 2;
-        const distance = 25 + Math.random() * 10;
+      {/* Random trees around the perimeter - pushed further out */}
+      {Array.from({ length: 60 }).map((_, i) => { // Increased number of trees
+        const angle = (i / 60) * Math.PI * 2;
+        const distance = 60 + Math.random() * 20; // Increased distance from center
         const x = Math.cos(angle) * distance;
         const z = Math.sin(angle) * distance;
         const scale = 0.7 + Math.random() * 0.8;
@@ -232,13 +239,13 @@ function Trees() {
         );
       })}
       
-      {/* Random tree clusters in specific areas */}
-      {Array.from({ length: 5 }).map((_, i) => {
-        const baseX = (Math.random() - 0.5) * 40;
-        const baseZ = (Math.random() - 0.5) * 40;
+      {/* Random tree clusters in specific areas - more spread out and more clusters */}
+      {Array.from({ length: 10 }).map((_, i) => { // Increased from 5 to 10 clusters
+        const baseX = (Math.random() - 0.5) * 120; // Increased spread
+        const baseZ = (Math.random() - 0.5) * 120; // Increased spread
         return Array.from({ length: 3 + Math.floor(Math.random() * 3) }).map((_, j) => {
-          const x = baseX + (Math.random() - 0.5) * 6;
-          const z = baseZ + (Math.random() - 0.5) * 6;
+          const x = baseX + (Math.random() - 0.5) * 8;
+          const z = baseZ + (Math.random() - 0.5) * 8;
           const scale = 0.6 + Math.random() * 0.6;
           return (
             <Tree
@@ -258,7 +265,7 @@ function Ground(props: ThreeElements['mesh']) {
   
   return (
     <mesh ref={ref} receiveShadow {...props}>
-      <planeGeometry args={[100, 100]} />
+      <planeGeometry args={[200, 200]} /> {/* Updated from 100x100 to 200x200 to match boundaries */}
       <meshStandardMaterial color="#448844" />
     </mesh>
   )
@@ -313,34 +320,34 @@ function Rock(props: ThreeElements['mesh']) {
 function Boundaries() {
   return (
     <group>
-      {/* North wall */}
-      <RigidBody type="fixed" position={[0, 2, -50]}>
+      {/* North wall - pushed further out */}
+      <RigidBody type="fixed" position={[0, 2, -100]}>
         <mesh receiveShadow>
-          <boxGeometry args={[100, 10, 1]} />
+          <boxGeometry args={[200, 10, 1]} /> {/* Increased width to match ground */}
           <meshStandardMaterial color="#448844" opacity={0.3} transparent />
         </mesh>
       </RigidBody>
       
-      {/* South wall */}
-      <RigidBody type="fixed" position={[0, 2, 50]}>
+      {/* South wall - pushed further out */}
+      <RigidBody type="fixed" position={[0, 2, 100]}>
         <mesh receiveShadow>
-          <boxGeometry args={[100, 10, 1]} />
+          <boxGeometry args={[200, 10, 1]} /> {/* Increased width to match ground */}
           <meshStandardMaterial color="#448844" opacity={0.3} transparent />
         </mesh>
       </RigidBody>
       
-      {/* East wall */}
-      <RigidBody type="fixed" position={[50, 2, 0]}>
+      {/* East wall - pushed further out */}
+      <RigidBody type="fixed" position={[100, 2, 0]}>
         <mesh receiveShadow>
-          <boxGeometry args={[1, 10, 100]} />
+          <boxGeometry args={[1, 10, 200]} /> {/* Increased length to match ground */}
           <meshStandardMaterial color="#448844" opacity={0.3} transparent />
         </mesh>
       </RigidBody>
       
-      {/* West wall */}
-      <RigidBody type="fixed" position={[-50, 2, 0]}>
+      {/* West wall - pushed further out */}
+      <RigidBody type="fixed" position={[-100, 2, 0]}>
         <mesh receiveShadow>
-          <boxGeometry args={[1, 10, 100]} />
+          <boxGeometry args={[1, 10, 200]} /> {/* Increased length to match ground */}
           <meshStandardMaterial color="#448844" opacity={0.3} transparent />
         </mesh>
       </RigidBody>
