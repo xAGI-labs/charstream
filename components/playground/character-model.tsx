@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { useFrame } from "@react-three/fiber"
+import { useFrame, ThreeEvent } from "@react-three/fiber"
 import { Html } from "@react-three/drei"
 import { useRouter } from "next/navigation"
 import { Character } from "@/types/character"
@@ -28,6 +28,8 @@ export function CharacterModel({
   const [clicked, setClicked] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
   const [walkCycle, setWalkCycle] = useState(Math.random() * Math.PI * 2) 
+  
+  const isRequestInProgress = useRef(false)
   
   const originalPos = useRef<THREE.Vector3>(new THREE.Vector3(...position))
   const targetPos = useRef<THREE.Vector3>(new THREE.Vector3(...position))
@@ -141,7 +143,7 @@ export function CharacterModel({
       const moveVector = new THREE.Vector3(
         targetPos.current.x - currentPos.x,
         0,
-        targetPos.current.z - currentPos.z
+        targetPos.current.z - currentPos.z,
       ).normalize()
       
       const actualSpeed = personalityTraits.current.speed * delta
@@ -172,10 +174,14 @@ export function CharacterModel({
     }
   })
   
-  const handleClick = async () => {
-    if (clicked) return
+  const handleClick = async (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation()
+    
+    // prevent multiple clicks and API calls
+    if (clicked || isRequestInProgress.current) return
     
     setClicked(true)
+    isRequestInProgress.current = true
     
     try {
       const response = await fetch("/api/conversations", {
@@ -197,6 +203,10 @@ export function CharacterModel({
       console.error("Error creating conversation:", error)
       toast.error("Failed to start conversation")
       setClicked(false)
+    } finally {
+      setTimeout(() => {
+        isRequestInProgress.current = false
+      }, 1000)
     }
   }
   
@@ -224,6 +234,7 @@ export function CharacterModel({
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
       onClick={handleClick}
+      userData={{ pointerEvents: { puncture: false } }}
     >
       <animated.group scale={scale}>
         {hovered && (
@@ -421,6 +432,8 @@ export function CharacterModel({
         position={[0, 1.2, 0]}
         center
         distanceFactor={10}
+        zIndexRange={[0, 0]}
+        occlude={true}
       >
         <div className={`px-2 py-1 rounded-lg text-center text-sm text-black font-bold ${hovered ? 'bg-yellow-300' : 'bg-white/80'}`}>
           {character.name}
