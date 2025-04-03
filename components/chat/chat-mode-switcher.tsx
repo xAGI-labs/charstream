@@ -15,7 +15,6 @@ interface ChatModeSwitcherProps {
   characterName?: string | null
 }
 
-// Define proper type for mode items
 interface ModeItem {
   id: ChatMode
   label: string
@@ -24,7 +23,7 @@ interface ModeItem {
   comingSoon?: boolean
 }
 
-export function ChatModeSwitcher({ mode, setMode }: ChatModeSwitcherProps) {
+export function ChatModeSwitcher({ mode, setMode, characterName }: ChatModeSwitcherProps) {
   const modes: ModeItem[] = [
     {
       id: "text",
@@ -42,20 +41,18 @@ export function ChatModeSwitcher({ mode, setMode }: ChatModeSwitcherProps) {
       id: "video",
       label: "Video",
       icon: Video,
-      available: true  // Change to true to enable video mode
+      available: characterName === "Harry Potter"
     }
   ]
 
   const handleModeChange = (newMode: ChatMode) => {
-    // Add confirmation for video mode to prevent accidental switches
-    if (newMode === "video") {
-      console.log("Switching to video mode");
+    if (newMode === "video" && characterName !== "Harry Potter") {
+      console.warn("Video mode is only available for Harry Potter.")
+      return
     }
-    
-    // Prevent rapid mode switching by adding a small debounce
     setTimeout(() => {
-      setMode(newMode);
-    }, 50);
+      setMode(newMode)
+    }, 50)
   }
 
   return (

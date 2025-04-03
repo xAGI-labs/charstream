@@ -26,6 +26,14 @@ export function VideoChat({
   characterAvatarUrl,
   onModeChange
 }: VideoProps) {
+  if (characterName !== "Harry Potter") {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+        <p className="text-muted-foreground">Video mode is only available for Harry Potter.</p>
+      </div>
+    );
+  }
+
   const [loading, setLoading] = useState(false)
   const [sessionData, setSessionData] = useState<VideoSessionData | null>(null)
   const [error, setError] = useState<string | null>(null)
