@@ -11,20 +11,20 @@ import { RootLayoutContent } from "@/components/layout/root-layout-content";
 import ThemeContextProvider from "@/context/theme-context";
 
 export const metadata: Metadata = {
-  title: "Chatstream.xyz - Create AI Characters and Chat With Them",
-  description: "Create custom AI characters, chat with popular fictional personalities, and bring your imagination to life with Chatstream.xyz - The ultimate AI character platform.",
-  keywords: "ai characters, chatbots, character creation, ai chat, roleplay characters, virtual companions, chatstream, AI Chat, chatgpt, character.ai, ai chat, virtual characters, interactive storytelling, AI companions, character creation platform, chat with characters, AI personalities, fictional characters, roleplay chatbots, AI character platform, chat, AI interaction, AI character design, AI roleplay, virtual characters, interactive chatbots, AI storytelling, character interaction, AI personality creation, chat with AI characters, create your own character, charstream, charstream.xyz, chatstream.xyz, character creation, realcharacters, chat with characters, AI characters, chatbots, roleplay characters, virtual companions, interactive storytelling, AI companions, character creation platform, chat with characters, AI personalities, fictional characters, roleplay chatbots",
+  title: "Charstream.xyz - Create AI Characters and Chat With Them",
+  description: "Create custom AI characters, chat with popular fictional personalities, and bring your imagination to life with Charstream.xyz - The ultimate AI character platform.",
+  keywords: "ai characters, chatbots, character creation, ai chat, roleplay characters, virtual companions, charstream, AI Chat, chatgpt, character.ai, ai chat, virtual characters, interactive storytelling, AI companions, character creation platform, chat with characters, AI personalities, fictional characters, roleplay chatbots, AI character platform, chat, AI interaction, AI character design, AI roleplay, virtual characters, interactive chatbots, AI storytelling, character interaction, AI personality creation, chat with AI characters, create your own character, charstream, charstream.xyz, charstream.xyz, character creation, realcharacters, chat with characters, AI characters, chatbots, roleplay characters, virtual companions, interactive storytelling, AI companions, character creation platform, chat with characters, AI personalities, fictional characters, roleplay chatbots",
   openGraph: {
-    title: "Chatstream.xyz - AI Character Creation Platform",
+    title: "Charstream.xyz - AI Character Creation Platform",
     description: "Create and chat with AI characters that feel real. Bring your favorite fictional characters to life or create entirely new ones.",
-    url: "https://chatstream.xyz",
-    siteName: "Chatstream.xyz",
+    url: "https://charstream.xyz",
+    siteName: "Charstream.xyz",
     images: [
       {
-        url: "https://chatstream.xyz/og-image.jpg",
+        url: "https://charstream.xyz/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Chatstream.xyz - AI Character Creation Platform",
+        alt: "Charstream.xyz - AI Character Creation Platform",
       },
     ],
     locale: "en_US",

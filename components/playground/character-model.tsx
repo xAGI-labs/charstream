@@ -177,7 +177,6 @@ export function CharacterModel({
   const handleClick = async (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()
     
-    // prevent multiple clicks and API calls
     if (clicked || isRequestInProgress.current) return
     
     setClicked(true)
